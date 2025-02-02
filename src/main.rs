@@ -20,6 +20,7 @@ enum Commands {
     Info { username: String },
     Add { username: String, home_dir: String },
     Delete { username: String },
+    Modify { username: String },
 }
 
 #[derive(ValueEnum, Clone)]
@@ -39,6 +40,7 @@ fn main() {
         Commands::Info { username } => user_info(username),
         Commands::Add { username, home_dir } => add_user(username, home_dir),
         Commands::Delete { username } => delete_user(username),
+        Commands::Modify { username } => println!("Modify user {}", username),
     }
 }
 
