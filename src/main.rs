@@ -45,13 +45,13 @@ fn main() {
 fn list_users_as_table() {
     let users = user::list_users();
     println!(
-        "{: <20} {: <10} {: <10} {: <20} {: <20}",
+        "{: <20} {: >10} {: >10} {: <20} {: <20}",
         "Username", "UID", "GID", "Home Directory", "Shell"
     );
     println!("{}", "-".repeat(84));
     for user in users {
         println!(
-            "{: <20} {: <10} {: <10} {: <20} {: <20}",
+            "{: <20} {: >10} {: >10} {: <20} {: <20}",
             user.username, user.uid, user.gid, user.home_dir, user.shell
         );
     }
