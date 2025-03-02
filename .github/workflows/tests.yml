@@ -1,4 +1,4 @@
-name: Rust Tests
+name: Tests
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
 
 jobs:
   test:
-    name: Run Tests
+    name: Rust Tests
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -20,9 +20,9 @@ jobs:
     #   uses: swatinem/rust-cache@v2
 
     - name: Build
-      run: cargo build --verbose
+      run: cargo build
 
     - name: Run tests
-      run: cargo test --verbose
-      env:
-        RUST_BACKTRACE: 1
+      run: cargo test --no-fail-fast
+      # env:
+      #   RUST_BACKTRACE: 1
