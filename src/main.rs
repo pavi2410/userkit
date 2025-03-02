@@ -55,7 +55,7 @@ fn handle_user_commands(cmd: &UserCommands) {
       if !user::user_info(username) {
         std::process::exit(1);
       }
-    },
+    }
     UserCommands::Add {
       username,
       home_dir,

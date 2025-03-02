@@ -121,7 +121,10 @@ pub(crate) fn add_user(username: &str, home_dir: &str) -> bool {
   };
 
   // Check if user already exists
-  if passwd_content.lines().any(|line| line.starts_with(&format!("{0}:", username))) {
+  if passwd_content
+    .lines()
+    .any(|line| line.starts_with(&format!("{0}:", username)))
+  {
     eprintln!("Error: User {} already exists", username);
     return false;
   }

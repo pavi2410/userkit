@@ -1,16 +1,11 @@
 use assert_cmd::prelude::*;
 use predicates::prelude::*;
-use std::process::Command;
+mod test_utils;
+use test_utils::run_userkit_command;
 
 #[test]
 fn test_group_add() {
-  let mut cmd = Command::new("cargo");
-  cmd
-    .arg("run")
-    .arg("--")
-    .arg("group")
-    .arg("add")
-    .arg("testgroup");
+  let mut cmd = run_userkit_command(vec!["group", "add", "testgroup"]);
 
   cmd
     .assert()
@@ -20,15 +15,7 @@ fn test_group_add() {
 
 #[test]
 fn test_group_add_with_gid() {
-  let mut cmd = Command::new("cargo");
-  cmd
-    .arg("run")
-    .arg("--")
-    .arg("group")
-    .arg("add")
-    .arg("testgroup2")
-    .arg("--gid")
-    .arg("1001");
+  let mut cmd = run_userkit_command(vec!["group", "add", "testgroup2", "--gid", "1001"]);
 
   cmd
     .assert()
@@ -38,13 +25,7 @@ fn test_group_add_with_gid() {
 
 #[test]
 fn test_group_remove() {
-  let mut cmd = Command::new("cargo");
-  cmd
-    .arg("run")
-    .arg("--")
-    .arg("group")
-    .arg("remove")
-    .arg("testgroup");
+  let mut cmd = run_userkit_command(vec!["group", "remove", "testgroup"]);
 
   cmd
     .assert()
@@ -54,15 +35,7 @@ fn test_group_remove() {
 
 #[test]
 fn test_group_modify() {
-  let mut cmd = Command::new("cargo");
-  cmd
-    .arg("run")
-    .arg("--")
-    .arg("group")
-    .arg("modify")
-    .arg("testgroup2")
-    .arg("--gid")
-    .arg("1002");
+  let mut cmd = run_userkit_command(vec!["group", "modify", "testgroup2", "--gid", "1002"]);
 
   cmd
     .assert()
@@ -72,8 +45,7 @@ fn test_group_modify() {
 
 #[test]
 fn test_group_list() {
-  let mut cmd = Command::new("cargo");
-  cmd.arg("run").arg("--").arg("group").arg("list");
+  let mut cmd = run_userkit_command(vec!["group", "list"]);
 
   cmd
     .assert()
@@ -83,27 +55,14 @@ fn test_group_list() {
 
 #[test]
 fn test_group_list_json_format() {
-  let mut cmd = Command::new("cargo");
-  cmd
-    .arg("run")
-    .arg("--")
-    .arg("group")
-    .arg("list")
-    .arg("--format")
-    .arg("json");
+  let mut cmd = run_userkit_command(vec!["group", "list", "--format", "json"]);
 
   cmd.assert().success().stdout(predicate::str::contains("["));
 }
 
 #[test]
 fn test_group_members() {
-  let mut cmd = Command::new("cargo");
-  cmd
-    .arg("run")
-    .arg("--")
-    .arg("group")
-    .arg("members")
-    .arg("testgroup");
+  let mut cmd = run_userkit_command(vec!["group", "members", "testgroup"]);
 
   cmd
     .assert()
@@ -113,14 +72,7 @@ fn test_group_members() {
 
 #[test]
 fn test_group_adduser() {
-  let mut cmd = Command::new("cargo");
-  cmd
-    .arg("run")
-    .arg("--")
-    .arg("group")
-    .arg("adduser")
-    .arg("testgroup")
-    .arg("testuser");
+  let mut cmd = run_userkit_command(vec!["group", "adduser", "testgroup", "testuser"]);
 
   cmd.assert().success().stdout(predicate::str::contains(
     "User testuser added to group testgroup",
@@ -129,14 +81,7 @@ fn test_group_adduser() {
 
 #[test]
 fn test_group_removeuser() {
-  let mut cmd = Command::new("cargo");
-  cmd
-    .arg("run")
-    .arg("--")
-    .arg("group")
-    .arg("removeuser")
-    .arg("testgroup")
-    .arg("testuser");
+  let mut cmd = run_userkit_command(vec!["group", "removeuser", "testgroup", "testuser"]);
 
   cmd.assert().success().stdout(predicate::str::contains(
     "User testuser removed from group testgroup",
@@ -145,8 +90,7 @@ fn test_group_removeuser() {
 
 #[test]
 fn test_group_add_invalid() {
-  let mut cmd = Command::new("cargo");
-  cmd.arg("run").arg("--").arg("group").arg("add").arg("root"); // Trying to add a group that likely already exists
+  let mut cmd = run_userkit_command(vec!["group", "add", "root"]);
 
   cmd
     .assert()

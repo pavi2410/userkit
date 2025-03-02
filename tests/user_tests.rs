@@ -1,27 +1,7 @@
 use assert_cmd::prelude::*;
 use predicates::prelude::*;
-use std::process::Command;
-
-fn run_userkit_command(subcommands: Vec<&str>) -> Command {
-  let mut cmd = Command::new("./target/debug/userkit");
-
-  for subcmd in subcommands {
-    cmd.arg(subcmd);
-  }
-
-  cmd
-}
-
-fn sudo_run_userkit_command(subcommands: Vec<&str>) -> Command {
-  let mut cmd = Command::new("sudo");
-  cmd.arg("./target/debug/userkit");
-
-  for subcmd in subcommands {
-    cmd.arg(subcmd);
-  }
-
-  cmd
-}
+mod test_utils;
+use test_utils::{run_userkit_command, sudo_run_userkit_command};
 
 #[test]
 fn test_user_add() {

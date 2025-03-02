@@ -1,17 +1,11 @@
 use assert_cmd::prelude::*;
 use predicates::prelude::*;
-use std::process::Command;
+mod test_utils;
+use test_utils::run_userkit_command;
 
 #[test]
 fn test_config_set() {
-  let mut cmd = Command::new("cargo");
-  cmd
-    .arg("run")
-    .arg("--")
-    .arg("config")
-    .arg("set")
-    .arg("default.shell")
-    .arg("/bin/bash");
+  let mut cmd = run_userkit_command(vec!["config", "set", "default.shell", "/bin/bash"]);
 
   cmd.assert().success().stdout(predicate::str::contains(
     "Configuration option default.shell set to /bin/bash",
@@ -20,13 +14,7 @@ fn test_config_set() {
 
 #[test]
 fn test_config_get() {
-  let mut cmd = Command::new("cargo");
-  cmd
-    .arg("run")
-    .arg("--")
-    .arg("config")
-    .arg("get")
-    .arg("default.shell");
+  let mut cmd = run_userkit_command(vec!["config", "get", "default.shell"]);
 
   cmd
     .assert()
@@ -36,8 +24,7 @@ fn test_config_get() {
 
 #[test]
 fn test_config_list() {
-  let mut cmd = Command::new("cargo");
-  cmd.arg("run").arg("--").arg("config").arg("list");
+  let mut cmd = run_userkit_command(vec!["config", "list"]);
 
   cmd
     .assert()
@@ -47,8 +34,7 @@ fn test_config_list() {
 
 #[test]
 fn test_config_reset() {
-  let mut cmd = Command::new("cargo");
-  cmd.arg("run").arg("--").arg("config").arg("reset");
+  let mut cmd = run_userkit_command(vec!["config", "reset"]);
 
   cmd
     .assert()
@@ -58,13 +44,7 @@ fn test_config_reset() {
 
 #[test]
 fn test_config_get_nonexistent() {
-  let mut cmd = Command::new("cargo");
-  cmd
-    .arg("run")
-    .arg("--")
-    .arg("config")
-    .arg("get")
-    .arg("nonexistent.option");
+  let mut cmd = run_userkit_command(vec!["config", "get", "nonexistent.option"]);
 
   cmd
     .assert()
