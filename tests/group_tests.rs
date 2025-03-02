@@ -4,8 +4,8 @@ mod test_utils;
 use test_utils::run_userkit_command;
 
 #[test]
-fn test_group_add() {
-  let mut cmd = run_userkit_command(vec!["group", "add", "testgroup"]);
+fn test_group_new() {
+  let mut cmd = run_userkit_command(vec!["group", "new", "testgroup"]);
 
   cmd
     .assert()
@@ -14,8 +14,8 @@ fn test_group_add() {
 }
 
 #[test]
-fn test_group_add_with_gid() {
-  let mut cmd = run_userkit_command(vec!["group", "add", "testgroup2", "--gid", "1001"]);
+fn test_group_new_with_gid() {
+  let mut cmd = run_userkit_command(vec!["group", "new", "testgroup2", "--gid", "1001"]);
 
   cmd
     .assert()
@@ -72,7 +72,7 @@ fn test_group_members() {
 
 #[test]
 fn test_group_adduser() {
-  let mut cmd = run_userkit_command(vec!["group", "adduser", "testgroup", "testuser"]);
+  let mut cmd = run_userkit_command(vec!["group", "add-user", "testgroup", "testuser"]);
 
   cmd.assert().success().stdout(predicate::str::contains(
     "User testuser added to group testgroup",
@@ -81,7 +81,7 @@ fn test_group_adduser() {
 
 #[test]
 fn test_group_removeuser() {
-  let mut cmd = run_userkit_command(vec!["group", "removeuser", "testgroup", "testuser"]);
+  let mut cmd = run_userkit_command(vec!["group", "remove-user", "testgroup", "testuser"]);
 
   cmd.assert().success().stdout(predicate::str::contains(
     "User testuser removed from group testgroup",
@@ -89,8 +89,8 @@ fn test_group_removeuser() {
 }
 
 #[test]
-fn test_group_add_invalid() {
-  let mut cmd = run_userkit_command(vec!["group", "add", "root"]);
+fn test_group_new_invalid() {
+  let mut cmd = run_userkit_command(vec!["group", "new", "root"]);
 
   cmd
     .assert()

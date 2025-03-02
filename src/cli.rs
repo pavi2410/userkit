@@ -134,7 +134,7 @@ pub enum UserCommands {
 #[derive(Subcommand)]
 pub enum GroupCommands {
   /// Create a new group
-  Add {
+  New {
     /// Group name
     groupname: String,
     /// Group ID
