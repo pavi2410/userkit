@@ -1,8 +1,12 @@
 use std::fs;
 
+use serde::Serialize;
+
+#[derive(Serialize)]
 pub(crate) struct User {
   pub(crate) username: String,
   #[allow(dead_code)]
+  #[serde(skip)]
   password: String,
   pub(crate) uid: u32,
   pub(crate) gid: u32,
@@ -57,18 +61,10 @@ pub(crate) fn list_users_as_table() {
 
 pub(crate) fn list_users_as_json() {
   let users = list_users();
-  let mut json = String::from("[\n");
-  for (i, user) in users.iter().enumerate() {
-    json.push_str(&format!(
-            "  {{ \"username\": \"{}\", \"uid\": {}, \"gid\": {}, \"home_dir\": \"{}\", \"shell\": \"{}\" }}",
-            user.username, user.uid, user.gid, user.home_dir, user.shell
-        ));
-    if i < users.len() - 1 {
-      json.push_str(",\n");
-    }
+  match serde_json::to_string_pretty(&users) {
+    Ok(json) => println!("{}", json),
+    Err(e) => eprintln!("Failed to serialize users to JSON: {}", e),
   }
-  json.push_str("\n]");
-  println!("{}", json);
 }
 
 pub(crate) fn user_info(username: &str) {
