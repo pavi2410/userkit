@@ -137,3 +137,31 @@ fn test_user_add_invalid() {
     .failure()
     .stderr(predicate::str::contains("Error"));
 }
+
+#[test]
+fn test_user_shell_profile() {
+  let mut cmd = run_userkit_command(vec!["user", "shell", "--username", "testprofile"]);
+
+  // This is a special case as it would spawn a shell
+  // We're just testing that the command doesn't fail immediately
+  cmd.assert().success();
+}
+
+#[test]
+fn test_user_shell_temp() {
+  let mut cmd = run_userkit_command(vec!["user", "shell"]);
+
+  // This is a special case as it would spawn a temporary shell
+  // We're just testing that the command doesn't fail immediately
+  cmd.assert().success();
+}
+
+#[test]
+fn test_user_shell_nonexistent_profile() {
+  let mut cmd = run_userkit_command(vec!["user", "shell", "--username", "nonexistentprofile"]);
+
+  cmd
+    .assert()
+    .failure()
+    .stderr(predicate::str::contains("Error"));
+}

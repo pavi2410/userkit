@@ -47,7 +47,7 @@ userkit <domain> <action> [options]
 | `userkit user lock <username>` | Lock user account |
 | `userkit user unlock <username>` | Unlock user account |
 | `userkit user passwd <username>` | Change user password |
-| `userkit user shell --profile <profile>` | Switch to a user and start a shell session |
+| `userkit user shell --username <username> <command>` | Switch to a user and start a shell session or run a command |
 | `userkit user shell --temp` | Create a temporary user and start a shell session |
 
 ### 2. Group Management
