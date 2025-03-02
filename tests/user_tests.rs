@@ -2,10 +2,29 @@ use assert_cmd::prelude::*;
 use predicates::prelude::*;
 use std::process::Command;
 
+fn run_userkit_command(subcommands: Vec<&str>, run_privileged: bool) -> Command {
+    let mut cmd = if run_privileged {
+        Command::new("sudo")
+    } else {
+        Command::new("cargo")
+    };
+
+    if run_privileged {
+        cmd.arg("cargo");
+    }
+
+    cmd.arg("run").arg("--");
+    
+    for subcmd in subcommands {
+        cmd.arg(subcmd);
+    }
+
+    cmd
+}
+
 #[test]
 fn test_user_add() {
-    let mut cmd = Command::new("cargo");
-    cmd.arg("run").arg("--").arg("user").arg("add").arg("testuser");
+    let cmd = run_userkit_command(vec!["user", "add", "testuser"], true);
     
     cmd.assert()
         .success()
@@ -14,8 +33,9 @@ fn test_user_add() {
 
 #[test]
 fn test_user_add_with_options() {
-    let mut cmd = Command::new("cargo");
-    cmd.arg("run")
+    let mut cmd = Command::new("sudo");
+    cmd.arg("cargo")
+        .arg("run")
         .arg("--")
         .arg("user")
         .arg("add")
@@ -32,8 +52,7 @@ fn test_user_add_with_options() {
 
 #[test]
 fn test_user_list() {
-    let mut cmd = Command::new("cargo");
-    cmd.arg("run").arg("--").arg("user").arg("list");
+    let cmd = run_userkit_command(vec!["user", "list"], false);
     
     cmd.assert()
         .success()
@@ -42,13 +61,7 @@ fn test_user_list() {
 
 #[test]
 fn test_user_list_json_format() {
-    let mut cmd = Command::new("cargo");
-    cmd.arg("run")
-        .arg("--")
-        .arg("user")
-        .arg("list")
-        .arg("--format")
-        .arg("json");
+    let cmd = run_userkit_command(vec!["user", "list", "--format", "json"], false);
     
     cmd.assert()
         .success()
@@ -56,27 +69,26 @@ fn test_user_list_json_format() {
 }
 
 #[test]
-fn test_user_info() {
-    let mut cmd = Command::new("cargo");
-    cmd.arg("run")
-        .arg("--")
-        .arg("user")
-        .arg("info")
-        .arg("testuser");
+fn test_user_info_existing() {
+    let cmd = run_userkit_command(vec!["user", "info", "root"], false); // Using root user which is guaranteed to exist
     
     cmd.assert()
         .success()
-        .stdout(predicate::str::contains("Username: testuser"));
+        .stdout(predicate::str::contains("Username: root"));
+}
+
+#[test]
+fn test_user_info_nonexistent() {
+    let cmd = run_userkit_command(vec!["user", "info", "nonexistentuser"], false); // Using a user that definitely doesn't exist
+    
+    cmd.assert()
+        .failure()
+        .stderr(predicate::str::contains("Error"));
 }
 
 #[test]
 fn test_user_remove() {
-    let mut cmd = Command::new("cargo");
-    cmd.arg("run")
-        .arg("--")
-        .arg("user")
-        .arg("remove")
-        .arg("testuser");
+    let cmd = run_userkit_command(vec!["user", "remove", "testuser"], true);
     
     cmd.assert()
         .success()
@@ -85,13 +97,7 @@ fn test_user_remove() {
 
 #[test]
 fn test_user_remove_with_home() {
-    let mut cmd = Command::new("cargo");
-    cmd.arg("run")
-        .arg("--")
-        .arg("user")
-        .arg("remove")
-        .arg("testuser2")
-        .arg("--remove-home");
+    let cmd = run_userkit_command(vec!["user", "remove", "testuser2", "--remove-home"], true);
     
     cmd.assert()
         .success()
@@ -100,14 +106,7 @@ fn test_user_remove_with_home() {
 
 #[test]
 fn test_user_modify() {
-    let mut cmd = Command::new("cargo");
-    cmd.arg("run")
-        .arg("--")
-        .arg("user")
-        .arg("modify")
-        .arg("testuser")
-        .arg("--shell")
-        .arg("/bin/zsh");
+    let cmd = run_userkit_command(vec!["user", "modify", "testuser", "--shell", "/bin/zsh"], true);
     
     cmd.assert()
         .success()
@@ -116,12 +115,7 @@ fn test_user_modify() {
 
 #[test]
 fn test_user_lock() {
-    let mut cmd = Command::new("cargo");
-    cmd.arg("run")
-        .arg("--")
-        .arg("user")
-        .arg("lock")
-        .arg("testuser");
+    let cmd = run_userkit_command(vec!["user", "lock", "testuser"], true);
     
     cmd.assert()
         .success()
@@ -130,12 +124,7 @@ fn test_user_lock() {
 
 #[test]
 fn test_user_unlock() {
-    let mut cmd = Command::new("cargo");
-    cmd.arg("run")
-        .arg("--")
-        .arg("user")
-        .arg("unlock")
-        .arg("testuser");
+    let cmd = run_userkit_command(vec!["user", "unlock", "testuser"], true);
     
     cmd.assert()
         .success()
@@ -144,12 +133,7 @@ fn test_user_unlock() {
 
 #[test]
 fn test_user_passwd() {
-    let mut cmd = Command::new("cargo");
-    cmd.arg("run")
-        .arg("--")
-        .arg("user")
-        .arg("passwd")
-        .arg("testuser");
+    let cmd = run_userkit_command(vec!["user", "passwd", "testuser"], true);
     
     cmd.assert()
         .success()
@@ -158,12 +142,7 @@ fn test_user_passwd() {
 
 #[test]
 fn test_user_add_invalid() {
-    let mut cmd = Command::new("cargo");
-    cmd.arg("run")
-        .arg("--")
-        .arg("user")
-        .arg("add")
-        .arg("root"); // Trying to add a user that likely already exists
+    let cmd = run_userkit_command(vec!["user", "add", "root"], true); // Trying to add a user that likely already exists
     
     cmd.assert()
         .failure()
