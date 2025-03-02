@@ -136,6 +136,12 @@ fn user_info(username: &str) {
 }
 
 fn add_user(username: &str, home_dir: &str) -> bool {
+  // Check if running with sudo/root privileges
+  if !has_escalated_privileges() {
+    eprintln!("Error: This operation requires root privileges. Please run with sudo.");
+    return false;
+  }
+
   let passwd_path = "/etc/passwd";
   let shadow_path = "/etc/shadow";
 
@@ -175,6 +181,73 @@ fn add_user(username: &str, home_dir: &str) -> bool {
   }
 
   true
+}
+
+fn delete_user(username: &str) -> bool {
+  // Check if running with sudo/root privileges
+  if !has_escalated_privileges() {
+    eprintln!("Error: This operation requires root privileges. Please run with sudo.");
+    return false;
+  }
+
+  let passwd_path = "/etc/passwd";
+  let shadow_path = "/etc/shadow";
+
+  // Try to read the files, but handle errors gracefully
+  let passwd_content = match fs::read_to_string(passwd_path) {
+    Ok(content) => content,
+    Err(e) => {
+      eprintln!("Failed to read {}: {}", passwd_path, e);
+      return false;
+    }
+  };
+  
+  let shadow_content = match fs::read_to_string(shadow_path) {
+    Ok(content) => content,
+    Err(e) => {
+      eprintln!("Failed to read {}: {}", shadow_path, e);
+      return false;
+    }
+  };
+
+  let new_passwd_content: String = passwd_content
+    .lines()
+    .filter(|line| !line.starts_with(username))
+    .map(|line| format!("{0}\n", line))
+    .collect();
+
+  let new_shadow_content: String = shadow_content
+    .lines()
+    .filter(|line| !line.starts_with(username))
+    .map(|line| format!("{0}\n", line))
+    .collect();
+
+  // Try to write the files, but handle errors gracefully
+  if let Err(e) = fs::write(passwd_path, new_passwd_content) {
+    eprintln!("Failed to write to {}: {}", passwd_path, e);
+    return false;
+  }
+  
+  if let Err(e) = fs::write(shadow_path, new_shadow_content) {
+    eprintln!("Failed to write to {}: {}", shadow_path, e);
+    return false;
+  }
+
+  true
+}
+
+fn has_escalated_privileges() -> bool {
+  // Check if running with sudo/root privileges
+  #[cfg(unix)]
+  {
+    use std::os::unix::fs::MetadataExt;
+    fs::metadata("/etc/passwd").map(|m| m.uid() == 0).unwrap_or(false)
+  }
+  #[cfg(not(unix))]
+  {
+    // On non-Unix systems, assume we need to run with admin privileges
+    false
+  }
 }
 
 // Renamed from delete_user to match the CLI command naming
