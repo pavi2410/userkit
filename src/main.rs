@@ -2,7 +2,6 @@ mod user;
 mod cli;
 
 use clap::Parser;
-use std::fs;
 use cli::{Cli, Domains, UserCommands, ListFormat, ShellCommands};
 
 // CLI structure is now defined in cli.rs
