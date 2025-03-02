@@ -4,7 +4,7 @@ version = "0.2.0"
 edition = "2024"
 license = "MIT"
 description = "A unified cross-platform CLI tool for user management, providing consistent interface for user operations"
-keywords = ["cli", "user-management", "system-administration", "cross-platform", "rust"]
+keywords = ["cli", "user-management", "system-admin", "cross-platform"]
 categories = ["command-line-utilities", "os", "system"]
 
 [dependencies]
