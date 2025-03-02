@@ -1,5 +1,5 @@
-use std::fs;
 use serde::Serialize;
+use std::fs;
 
 #[derive(Serialize)]
 pub(crate) struct User {
@@ -35,7 +35,7 @@ pub(crate) fn list_users() -> Vec<User> {
         }
       }
       users
-    },
+    }
     Err(e) => {
       eprintln!("Failed to read /etc/passwd: {}", e);
       Vec::new()
@@ -47,33 +47,33 @@ use tabled::{Table, Tabled};
 
 #[derive(Tabled)]
 struct UserTable {
-    #[tabled(rename = "Username")]
-    username: String,
-    #[tabled(rename = "UID")]
-    uid: u32,
-    #[tabled(rename = "GID")]
-    gid: u32,
-    #[tabled(rename = "Home Directory")]
-    home_dir: String,
-    #[tabled(rename = "Shell")]
-    shell: String,
+  #[tabled(rename = "Username")]
+  username: String,
+  #[tabled(rename = "UID")]
+  uid: u32,
+  #[tabled(rename = "GID")]
+  gid: u32,
+  #[tabled(rename = "Home Directory")]
+  home_dir: String,
+  #[tabled(rename = "Shell")]
+  shell: String,
 }
 
 pub(crate) fn list_users_as_table() {
-    let users = list_users();
-    let table_data: Vec<UserTable> = users
-        .into_iter()
-        .map(|user| UserTable {
-            username: user.username,
-            uid: user.uid,
-            gid: user.gid,
-            home_dir: user.home_dir,
-            shell: user.shell,
-        })
-        .collect();
+  let users = list_users();
+  let table_data: Vec<UserTable> = users
+    .into_iter()
+    .map(|user| UserTable {
+      username: user.username,
+      uid: user.uid,
+      gid: user.gid,
+      home_dir: user.home_dir,
+      shell: user.shell,
+    })
+    .collect();
 
-    let table = Table::new(table_data).to_string();
-    println!("{}", table);
+  let table = Table::new(table_data).to_string();
+  println!("{}", table);
 }
 
 pub(crate) fn list_users_as_json() {
@@ -118,7 +118,7 @@ pub(crate) fn add_user(username: &str, home_dir: &str) -> bool {
       return false;
     }
   };
-  
+
   let shadow_content = match fs::read_to_string(shadow_path) {
     Ok(content) => content,
     Err(e) => {
@@ -128,7 +128,10 @@ pub(crate) fn add_user(username: &str, home_dir: &str) -> bool {
   };
 
   let uid = passwd_content.lines().count() + 1000; // Simple UID generation
-  let new_passwd_entry = format!("{0}:x:{1}:{1}::{2}/{0}:/bin/bash\n", username, uid, home_dir);
+  let new_passwd_entry = format!(
+    "{0}:x:{1}:{1}::{2}/{0}:/bin/bash\n",
+    username, uid, home_dir
+  );
   let new_shadow_entry = format!("{0}:*:18922:0:99999:7:::\n", username); // Placeholder password entry
 
   let updated_passwd = passwd_content + &new_passwd_entry;
@@ -139,7 +142,7 @@ pub(crate) fn add_user(username: &str, home_dir: &str) -> bool {
     eprintln!("Failed to write to {}: {}", passwd_path, e);
     return false;
   }
-  
+
   if let Err(e) = fs::write(shadow_path, updated_shadow) {
     eprintln!("Failed to write to {}: {}", shadow_path, e);
     return false;
@@ -166,7 +169,7 @@ pub(crate) fn delete_user(username: &str) -> bool {
       return false;
     }
   };
-  
+
   let shadow_content = match fs::read_to_string(shadow_path) {
     Ok(content) => content,
     Err(e) => {
@@ -192,7 +195,7 @@ pub(crate) fn delete_user(username: &str) -> bool {
     eprintln!("Failed to write to {}: {}", passwd_path, e);
     return false;
   }
-  
+
   if let Err(e) = fs::write(shadow_path, new_shadow_content) {
     eprintln!("Failed to write to {}: {}", shadow_path, e);
     return false;
@@ -206,7 +209,9 @@ fn has_escalated_privileges() -> bool {
   #[cfg(unix)]
   {
     use std::os::unix::fs::MetadataExt;
-    fs::metadata("/etc/passwd").map(|m| m.uid() == 0).unwrap_or(false)
+    fs::metadata("/etc/passwd")
+      .map(|m| m.uid() == 0)
+      .unwrap_or(false)
   }
   #[cfg(not(unix))]
   {

@@ -1,8 +1,8 @@
-mod user;
 mod cli;
+mod user;
 
 use clap::Parser;
-use cli::{Cli, Domains, UserCommands, ListFormat, ShellCommands};
+use cli::{Cli, Domains, ListFormat, ShellCommands, UserCommands};
 
 // CLI structure is now defined in cli.rs
 
@@ -35,20 +35,31 @@ fn handle_shell_commands(cmd: &ShellCommands) {
 
 fn handle_user_commands(cmd: &UserCommands) {
   match cmd {
-    UserCommands::List { format, uid_range, gid } => {
+    UserCommands::List {
+      format,
+      uid_range,
+      gid,
+    } => {
       // Handle optional filters
       if uid_range.is_some() || gid.is_some() {
         println!("Filtering not implemented yet");
       }
-      
+
       match format {
         ListFormat::Table => user::list_users_as_table(),
         ListFormat::Json => user::list_users_as_json(),
         ListFormat::Csv => println!("CSV format not implemented yet"),
       }
-    },
+    }
     UserCommands::Info { username } => user::user_info(username),
-    UserCommands::Add { username, home_dir, shell, uid, gid, gecos } => {
+    UserCommands::Add {
+      username,
+      home_dir,
+      shell,
+      uid,
+      gid,
+      gecos,
+    } => {
       let home = home_dir.as_deref().unwrap_or("/home/");
       if user::add_user(username, home) {
         println!("User {} created successfully", username);
@@ -60,8 +71,11 @@ fn handle_user_commands(cmd: &UserCommands) {
       if shell.is_some() || uid.is_some() || gid.is_some() || gecos.is_some() {
         println!("Additional parameters not implemented yet");
       }
-    },
-    UserCommands::Remove { username, remove_home } => {
+    }
+    UserCommands::Remove {
+      username,
+      remove_home,
+    } => {
       if user::delete_user(username) {
         println!("User {} removed successfully", username);
       } else {
@@ -71,22 +85,18 @@ fn handle_user_commands(cmd: &UserCommands) {
       if *remove_home {
         println!("Removing home directory not implemented yet");
       }
-    },
+    }
     UserCommands::Modify { username, .. } => {
       println!("User {} modified successfully", username);
-    },
+    }
     UserCommands::Lock { username } => {
       println!("User {} locked successfully", username);
-    },
+    }
     UserCommands::Unlock { username } => {
       println!("User {} unlocked successfully", username);
-    },
+    }
     UserCommands::Passwd { username } => {
       println!("Password for {} changed successfully", username);
-    },
+    }
   }
 }
-
-
-
-
