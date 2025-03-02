@@ -1,16 +1,11 @@
 use assert_cmd::prelude::*;
 use predicates::prelude::*;
-use std::process::Command;
+mod test_utils;
+use test_utils::run_userkit_command;
 
 #[test]
 fn test_role_create() {
-  let mut cmd = Command::new("cargo");
-  cmd
-    .arg("run")
-    .arg("--")
-    .arg("role")
-    .arg("create")
-    .arg("testrole");
+  let mut cmd = run_userkit_command(vec!["role", "create", "testrole"]);
 
   cmd
     .assert()
@@ -20,15 +15,13 @@ fn test_role_create() {
 
 #[test]
 fn test_role_create_with_description() {
-  let mut cmd = Command::new("cargo");
-  cmd
-    .arg("run")
-    .arg("--")
-    .arg("role")
-    .arg("create")
-    .arg("testrole2")
-    .arg("--description")
-    .arg("A test role with description");
+  let mut cmd = run_userkit_command(vec![
+    "role",
+    "create",
+    "testrole2",
+    "--description",
+    "A test role with description",
+  ]);
 
   cmd
     .assert()
@@ -38,13 +31,7 @@ fn test_role_create_with_description() {
 
 #[test]
 fn test_role_delete() {
-  let mut cmd = Command::new("cargo");
-  cmd
-    .arg("run")
-    .arg("--")
-    .arg("role")
-    .arg("delete")
-    .arg("testrole");
+  let mut cmd = run_userkit_command(vec!["role", "delete", "testrole"]);
 
   cmd
     .assert()
@@ -54,14 +41,7 @@ fn test_role_delete() {
 
 #[test]
 fn test_role_assign() {
-  let mut cmd = Command::new("cargo");
-  cmd
-    .arg("run")
-    .arg("--")
-    .arg("role")
-    .arg("assign")
-    .arg("testrole2")
-    .arg("testuser");
+  let mut cmd = run_userkit_command(vec!["role", "assign", "testrole2", "testuser"]);
 
   cmd.assert().success().stdout(predicate::str::contains(
     "Role testrole2 assigned to user testuser",
@@ -70,14 +50,7 @@ fn test_role_assign() {
 
 #[test]
 fn test_role_revoke() {
-  let mut cmd = Command::new("cargo");
-  cmd
-    .arg("run")
-    .arg("--")
-    .arg("role")
-    .arg("revoke")
-    .arg("testrole2")
-    .arg("testuser");
+  let mut cmd = run_userkit_command(vec!["role", "revoke", "testrole2", "testuser"]);
 
   cmd.assert().success().stdout(predicate::str::contains(
     "Role testrole2 revoked from user testuser",
@@ -86,8 +59,7 @@ fn test_role_revoke() {
 
 #[test]
 fn test_role_list() {
-  let mut cmd = Command::new("cargo");
-  cmd.arg("run").arg("--").arg("role").arg("list");
+  let mut cmd = run_userkit_command(vec!["role", "list"]);
 
   cmd
     .assert()
@@ -97,27 +69,14 @@ fn test_role_list() {
 
 #[test]
 fn test_role_list_json_format() {
-  let mut cmd = Command::new("cargo");
-  cmd
-    .arg("run")
-    .arg("--")
-    .arg("role")
-    .arg("list")
-    .arg("--format")
-    .arg("json");
+  let mut cmd = run_userkit_command(vec!["role", "list", "--format", "json"]);
 
   cmd.assert().success().stdout(predicate::str::contains("["));
 }
 
 #[test]
 fn test_role_info() {
-  let mut cmd = Command::new("cargo");
-  cmd
-    .arg("run")
-    .arg("--")
-    .arg("role")
-    .arg("info")
-    .arg("testrole2");
+  let mut cmd = run_userkit_command(vec!["role", "info", "testrole2"]);
 
   cmd
     .assert()
@@ -127,14 +86,7 @@ fn test_role_info() {
 
 #[test]
 fn test_role_addperm() {
-  let mut cmd = Command::new("cargo");
-  cmd
-    .arg("run")
-    .arg("--")
-    .arg("role")
-    .arg("addperm")
-    .arg("testrole2")
-    .arg("read:/tmp/testfile");
+  let mut cmd = run_userkit_command(vec!["role", "addperm", "testrole2", "read:/tmp/testfile"]);
 
   cmd.assert().success().stdout(predicate::str::contains(
     "Permission read:/tmp/testfile added to role testrole2",
@@ -143,13 +95,7 @@ fn test_role_addperm() {
 
 #[test]
 fn test_role_delete_nonexistent() {
-  let mut cmd = Command::new("cargo");
-  cmd
-    .arg("run")
-    .arg("--")
-    .arg("role")
-    .arg("delete")
-    .arg("nonexistentrole");
+  let mut cmd = run_userkit_command(vec!["role", "delete", "nonexistentrole"]);
 
   cmd
     .assert()
@@ -159,14 +105,7 @@ fn test_role_delete_nonexistent() {
 
 #[test]
 fn test_role_assign_nonexistent_role() {
-  let mut cmd = Command::new("cargo");
-  cmd
-    .arg("run")
-    .arg("--")
-    .arg("role")
-    .arg("assign")
-    .arg("nonexistentrole")
-    .arg("testuser");
+  let mut cmd = run_userkit_command(vec!["role", "assign", "nonexistentrole", "testuser"]);
 
   cmd
     .assert()
@@ -176,14 +115,7 @@ fn test_role_assign_nonexistent_role() {
 
 #[test]
 fn test_role_assign_nonexistent_user() {
-  let mut cmd = Command::new("cargo");
-  cmd
-    .arg("run")
-    .arg("--")
-    .arg("role")
-    .arg("assign")
-    .arg("testrole2")
-    .arg("nonexistentuser");
+  let mut cmd = run_userkit_command(vec!["role", "assign", "testrole2", "nonexistentuser"]);
 
   cmd
     .assert()

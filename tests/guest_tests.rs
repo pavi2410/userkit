@@ -1,11 +1,11 @@
 use assert_cmd::prelude::*;
 use predicates::prelude::*;
-use std::process::Command;
+mod test_utils;
+use test_utils::run_userkit_command;
 
 #[test]
 fn test_guest_create() {
-  let mut cmd = Command::new("cargo");
-  cmd.arg("run").arg("--").arg("guest").arg("create");
+  let mut cmd = run_userkit_command(vec!["guest", "create"]);
 
   cmd
     .assert()
@@ -15,13 +15,7 @@ fn test_guest_create() {
 
 #[test]
 fn test_guest_create_with_name() {
-  let mut cmd = Command::new("cargo");
-  cmd
-    .arg("run")
-    .arg("--")
-    .arg("guest")
-    .arg("create")
-    .arg("testguest");
+  let mut cmd = run_userkit_command(vec!["guest", "create", "testguest"]);
 
   cmd
     .assert()
@@ -31,15 +25,7 @@ fn test_guest_create_with_name() {
 
 #[test]
 fn test_guest_create_with_expiration() {
-  let mut cmd = Command::new("cargo");
-  cmd
-    .arg("run")
-    .arg("--")
-    .arg("guest")
-    .arg("create")
-    .arg("testguest2")
-    .arg("--expire")
-    .arg("7");
+  let mut cmd = run_userkit_command(vec!["guest", "create", "testguest2", "--expire", "7"]);
 
   cmd.assert().success().stdout(predicate::str::contains(
     "Guest account testguest2 created with 7 day expiration",
@@ -48,13 +34,7 @@ fn test_guest_create_with_expiration() {
 
 #[test]
 fn test_guest_remove() {
-  let mut cmd = Command::new("cargo");
-  cmd
-    .arg("run")
-    .arg("--")
-    .arg("guest")
-    .arg("remove")
-    .arg("testguest");
+  let mut cmd = run_userkit_command(vec!["guest", "remove", "testguest"]);
 
   cmd
     .assert()
@@ -64,8 +44,7 @@ fn test_guest_remove() {
 
 #[test]
 fn test_guest_list() {
-  let mut cmd = Command::new("cargo");
-  cmd.arg("run").arg("--").arg("guest").arg("list");
+  let mut cmd = run_userkit_command(vec!["guest", "list"]);
 
   cmd
     .assert()
@@ -75,13 +54,7 @@ fn test_guest_list() {
 
 #[test]
 fn test_guest_info() {
-  let mut cmd = Command::new("cargo");
-  cmd
-    .arg("run")
-    .arg("--")
-    .arg("guest")
-    .arg("info")
-    .arg("testguest2");
+  let mut cmd = run_userkit_command(vec!["guest", "info", "testguest2"]);
 
   cmd
     .assert()
@@ -91,8 +64,7 @@ fn test_guest_info() {
 
 #[test]
 fn test_guest_shell() {
-  let mut cmd = Command::new("cargo");
-  cmd.arg("run").arg("--").arg("guest").arg("shell");
+  let mut cmd = run_userkit_command(vec!["guest", "shell"]);
 
   // This is a special case as it would spawn a shell
   // We're just testing that the command doesn't fail immediately
@@ -101,14 +73,7 @@ fn test_guest_shell() {
 
 #[test]
 fn test_guest_expire() {
-  let mut cmd = Command::new("cargo");
-  cmd
-    .arg("run")
-    .arg("--")
-    .arg("guest")
-    .arg("expire")
-    .arg("testguest2")
-    .arg("14");
+  let mut cmd = run_userkit_command(vec!["guest", "expire", "testguest2", "14"]);
 
   cmd.assert().success().stdout(predicate::str::contains(
     "Expiration for guest account testguest2 set to 14 days",
@@ -117,13 +82,7 @@ fn test_guest_expire() {
 
 #[test]
 fn test_guest_remove_nonexistent() {
-  let mut cmd = Command::new("cargo");
-  cmd
-    .arg("run")
-    .arg("--")
-    .arg("guest")
-    .arg("remove")
-    .arg("nonexistentguest");
+  let mut cmd = run_userkit_command(vec!["guest", "remove", "nonexistentguest"]);
 
   cmd
     .assert()
@@ -133,13 +92,7 @@ fn test_guest_remove_nonexistent() {
 
 #[test]
 fn test_guest_info_nonexistent() {
-  let mut cmd = Command::new("cargo");
-  cmd
-    .arg("run")
-    .arg("--")
-    .arg("guest")
-    .arg("info")
-    .arg("nonexistentguest");
+  let mut cmd = run_userkit_command(vec!["guest", "info", "nonexistentguest"]);
 
   cmd
     .assert()
