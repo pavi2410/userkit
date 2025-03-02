@@ -342,12 +342,15 @@ pub enum ConfigCommands {
 
 #[derive(Subcommand)]
 pub enum ShellCommands {
-  /// Switch to a user and start a shell session
+  /// Start a shell session
   #[command(name = "shell")]
   Shell {
-    /// Profile name
+    /// Username to switch to
     #[arg(long)]
-    profile: String,
+    username: Option<String>,
+    /// Use temporary profile
+    #[arg(long)]
+    temp: bool,
   },
 }
 

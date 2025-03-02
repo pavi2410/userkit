@@ -1,5 +1,6 @@
 mod cli;
 mod user;
+mod shell;
 
 use clap::Parser;
 use cli::{Cli, Domains, ListFormat, ShellCommands, UserCommands};
@@ -22,11 +23,17 @@ fn main() {
 
 fn handle_shell_commands(cmd: &ShellCommands) {
   match cmd {
-    ShellCommands::Shell { profile } => {
-      println!("Switching to profile: {}", profile);
-      // In a real implementation, this would switch to the specified profile
-      if profile == "nonexistentprofile" {
-        eprintln!("Error: Profile '{}' does not exist", profile);
+    ShellCommands::Shell { username, temp } => {
+      if *temp {
+        if !shell::create_temp_shell() {
+          std::process::exit(1);
+        }
+      } else if let Some(user) = username {
+        if !shell::switch_to_profile(user) {
+          std::process::exit(1);
+        }
+      } else {
+        eprintln!("Error: Either --username or --temp must be specified");
         std::process::exit(1);
       }
     }
