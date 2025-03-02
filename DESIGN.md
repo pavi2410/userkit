@@ -21,25 +21,17 @@ UserKit is a comprehensive command-line interface (CLI) tool built in Rust for s
 UserKit follows a consistent command structure:
 
 ```
-
 userkit <domain> <action> [options]
-
 ```
 
 ### Domains
 
 - `user`: User account management
-
 - `group`: Group management
-
 - `perm`: Permission management
-
 - `role`: Role-based access control
-
 - `guest`: Guest and temporary account management
-
 - `config`: Tool configuration
-
 - `shell`: Shell access and user switching
 
 ## Feature Set
@@ -47,105 +39,65 @@ userkit <domain> <action> [options]
 ### 1. User Management
 
 | Command | Description |
-
 |---------|-------------|
-
 | `userkit user add <username> [options]` | Create a new user |
-
 | `userkit user remove <username> [options]` | Delete a user |
-
 | `userkit user modify <username> [options]` | Modify user properties |
-
 | `userkit user list [options]` | List users with filtering options |
-
 | `userkit user info <username>` | Show detailed user information |
-
 | `userkit user lock <username>` | Lock user account |
-
 | `userkit user unlock <username>` | Unlock user account |
-
 | `userkit user passwd <username>` | Change user password |
 
 ### 2. Group Management
 
 | Command | Description |
-
 |---------|-------------|
-
 | `userkit group add <groupname> [options]` | Create a new group |
-
 | `userkit group remove <groupname>` | Delete a group |
-
 | `userkit group modify <groupname> [options]` | Modify group properties |
-
 | `userkit group list [options]` | List groups with filtering |
-
 | `userkit group members <groupname>` | List members of a group |
-
 | `userkit group adduser <groupname> <username>` | Add user to group |
-
 | `userkit group removeuser <groupname> <username>` | Remove user from group |
 
 ### 3. Permission Management
 
 | Command | Description |
-
 |---------|-------------|
-
 | `userkit perm set <target> <permissions> [options]` | Set permissions |
-
 | `userkit perm get <target>` | Get permissions for a target |
-
 | `userkit perm check <username> <target>` | Check if user has permissions |
-
 | `userkit perm sudo <username> [enable/disable]` | Manage sudo access |
 
 ### 4. Role-Based Access Control
 
 | Command | Description |
-
 |---------|-------------|
-
 | `userkit role create <rolename> [options]` | Create a new role |
-
 | `userkit role delete <rolename>` | Delete a role |
-
 | `userkit role assign <rolename> <username>` | Assign role to user |
-
 | `userkit role revoke <rolename> <username>` | Revoke role from user |
-
 | `userkit role list [options]` | List available roles |
-
 | `userkit role info <rolename>` | Show role details and permissions |
-
 | `userkit role addperm <rolename> <permission>` | Add permission to role |
 
 ### 5. Guest Account Management
 
 | Command | Description |
-
 |---------|-------------|
-
 | `userkit guest create [name] [options]` | Create a new guest account |
-
 | `userkit guest remove <name>` | Remove a guest account |
-
 | `userkit guest list` | List all guest accounts |
-
 | `userkit guest info <name>` | Show guest account details |
-
 | `userkit guest shell [options]` | Spawn a temporary shell with a one-off guest account |
-
 | `userkit guest expire <name> <time>` | Set expiration for a guest account |
 
 ### 6. Shell Access
 
 | Command | Description |
-
 |---------|-------------|
-
 | `userkit shell --profile <profile>` | Switch to a user and start a shell session |
-
 | `userkit shell --temp` | Create a temporary user and start a shell session |
 
 ## Technical Implementation
