@@ -266,9 +266,7 @@ pub(crate) fn shell(username: Option<&str>, command: Option<&str>) -> bool {
     // Set user context if username is provided
     if let Some(username) = username {
       if let Some(user) = list_users().into_iter().find(|u| u.username == username) {
-        unsafe {
-          cmd.uid(user.uid).gid(user.gid);
-        }
+        cmd.uid(user.uid).gid(user.gid);
       }
     }
 
