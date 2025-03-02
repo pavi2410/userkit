@@ -51,7 +51,11 @@ fn handle_user_commands(cmd: &UserCommands) {
         ListFormat::Csv => println!("CSV format not implemented yet"),
       }
     }
-    UserCommands::Info { username } => user::user_info(username),
+    UserCommands::Info { username } => {
+      if !user::user_info(username) {
+        std::process::exit(1);
+      }
+    },
     UserCommands::Add {
       username,
       home_dir,

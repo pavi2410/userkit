@@ -84,7 +84,7 @@ pub(crate) fn list_users_as_json() {
   }
 }
 
-pub(crate) fn user_info(username: &str) {
+pub(crate) fn user_info(username: &str) -> bool {
   let users = list_users();
   for user in users {
     if user.username == username {
@@ -94,10 +94,11 @@ pub(crate) fn user_info(username: &str) {
       println!("GECOS: {}", user.gecos);
       println!("Home Directory: {}", user.home_dir);
       println!("Shell: {}", user.shell);
-      return;
+      return true;
     }
   }
-  println!("User {} not found", username);
+  eprintln!("Error: User {} not found", username);
+  false
 }
 
 pub(crate) fn add_user(username: &str, home_dir: &str) -> bool {
