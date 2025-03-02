@@ -1,5 +1,3 @@
-use std::fs;
-
 use serde::Serialize;
 
 #[derive(Serialize)]
@@ -44,19 +42,37 @@ pub(crate) fn list_users() -> Vec<User> {
   }
 }
 
+use tabled::{Table, Tabled};
+
+#[derive(Tabled)]
+struct UserTable {
+    #[tabled(rename = "Username")]
+    username: String,
+    #[tabled(rename = "UID")]
+    uid: u32,
+    #[tabled(rename = "GID")]
+    gid: u32,
+    #[tabled(rename = "Home Directory")]
+    home_dir: String,
+    #[tabled(rename = "Shell")]
+    shell: String,
+}
+
 pub(crate) fn list_users_as_table() {
-  let users = list_users();
-  println!(
-    "{: <20} {: >10} {: >10} {: <20} {: <20}",
-    "Username", "UID", "GID", "Home Directory", "Shell"
-  );
-  println!("{}", "-".repeat(84));
-  for user in users {
-    println!(
-      "{: <20} {: >10} {: >10} {: <20} {: <20}",
-      user.username, user.uid, user.gid, user.home_dir, user.shell
-    );
-  }
+    let users = list_users();
+    let table_data: Vec<UserTable> = users
+        .into_iter()
+        .map(|user| UserTable {
+            username: user.username,
+            uid: user.uid,
+            gid: user.gid,
+            home_dir: user.home_dir,
+            shell: user.shell,
+        })
+        .collect();
+
+    let table = Table::new(table_data).to_string();
+    println!("{}", table);
 }
 
 pub(crate) fn list_users_as_json() {
