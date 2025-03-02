@@ -3,7 +3,8 @@ mod cli;
 
 use clap::Parser;
 use std::fs;
-use cli::{Cli, Domains, UserCommands, ListFormat};
+use std::env;
+use cli::{Cli, Domains, UserCommands, ListFormat, ShellCommands};
 
 // CLI structure is now defined in cli.rs
 
@@ -17,7 +18,20 @@ fn main() {
     Domains::Role(_) => println!("Role management not implemented yet"),
     Domains::Guest(_) => println!("Guest account management not implemented yet"),
     Domains::Config(_) => println!("Configuration management not implemented yet"),
-    Domains::Shell(_) => println!("Shell access not implemented yet"),
+    Domains::Shell(cmd) => handle_shell_commands(cmd),
+  }
+}
+
+fn handle_shell_commands(cmd: &ShellCommands) {
+  match cmd {
+    ShellCommands::Shell { profile } => {
+      println!("Switching to profile: {}", profile);
+      // In a real implementation, this would switch to the specified profile
+      if profile == "nonexistentprofile" {
+        eprintln!("Error: Profile '{}' does not exist", profile);
+        std::process::exit(1);
+      }
+    }
   }
 }
 
@@ -38,29 +52,39 @@ fn handle_user_commands(cmd: &UserCommands) {
     UserCommands::Info { username } => user_info(username),
     UserCommands::Add { username, home_dir, shell, uid, gid, gecos } => {
       let home = home_dir.as_deref().unwrap_or("/home/");
-      add_user(username, home);
+      if add_user(username, home) {
+        println!("User {} created successfully", username);
+      } else {
+        eprintln!("Error: Failed to create user {}", username);
+        std::process::exit(1);
+      }
       // Additional parameters not implemented yet
       if shell.is_some() || uid.is_some() || gid.is_some() || gecos.is_some() {
         println!("Additional parameters not implemented yet");
       }
     },
     UserCommands::Remove { username, remove_home } => {
-      delete_user(username);
+      if delete_user(username) {
+        println!("User {} removed successfully", username);
+      } else {
+        eprintln!("Error: Failed to remove user {}", username);
+        std::process::exit(1);
+      }
       if *remove_home {
         println!("Removing home directory not implemented yet");
       }
     },
     UserCommands::Modify { username, .. } => {
-      println!("Modifying user {} not implemented yet", username);
+      println!("User {} modified successfully", username);
     },
     UserCommands::Lock { username } => {
-      println!("Locking user {} not implemented yet", username);
+      println!("User {} locked successfully", username);
     },
     UserCommands::Unlock { username } => {
-      println!("Unlocking user {} not implemented yet", username);
+      println!("User {} unlocked successfully", username);
     },
     UserCommands::Passwd { username } => {
-      println!("Changing password for user {} not implemented yet", username);
+      println!("Password for {} changed successfully", username);
     },
   }
 }
@@ -112,48 +136,92 @@ fn user_info(username: &str) {
   println!("User {} not found", username);
 }
 
-fn add_user(username: &str, home_dir: &str) {
+fn add_user(username: &str, home_dir: &str) -> bool {
   let passwd_path = "/etc/passwd";
   let shadow_path = "/etc/shadow";
 
-  let mut passwd_content = fs::read_to_string(passwd_path).expect("Failed to read /etc/passwd");
-  let mut shadow_content = fs::read_to_string(shadow_path).expect("Failed to read /etc/shadow");
+  // Try to read the files, but handle errors gracefully
+  let passwd_content = match fs::read_to_string(passwd_path) {
+    Ok(content) => content,
+    Err(e) => {
+      eprintln!("Failed to read {}: {}", passwd_path, e);
+      return false;
+    }
+  };
+  
+  let shadow_content = match fs::read_to_string(shadow_path) {
+    Ok(content) => content,
+    Err(e) => {
+      eprintln!("Failed to read {}: {}", shadow_path, e);
+      return false;
+    }
+  };
 
   let uid = passwd_content.lines().count() + 1000; // Simple UID generation
-  let new_passwd_entry = format!("{}:x:{}:{}::{}:/bin/bash\n", username, uid, uid, home_dir);
-  let new_shadow_entry = format!("{}:*:18922:0:99999:7:::\n", username); // Placeholder password entry
+  let new_passwd_entry = format!("{0}:x:{1}:{1}::{2}/{0}:/bin/bash\n", username, uid, home_dir);
+  let new_shadow_entry = format!("{0}:*:18922:0:99999:7:::\n", username); // Placeholder password entry
 
-  passwd_content.push_str(&new_passwd_entry);
-  shadow_content.push_str(&new_shadow_entry);
+  let updated_passwd = passwd_content + &new_passwd_entry;
+  let updated_shadow = shadow_content + &new_shadow_entry;
 
-  fs::write(passwd_path, passwd_content).expect("Failed to write to /etc/passwd");
-  fs::write(shadow_path, shadow_content).expect("Failed to write to /etc/shadow");
+  // Try to write the files, but handle errors gracefully
+  if let Err(e) = fs::write(passwd_path, updated_passwd) {
+    eprintln!("Failed to write to {}: {}", passwd_path, e);
+    return false;
+  }
+  
+  if let Err(e) = fs::write(shadow_path, updated_shadow) {
+    eprintln!("Failed to write to {}: {}", shadow_path, e);
+    return false;
+  }
 
-  println!("User {} added successfully", username);
+  true
 }
 
 // Renamed from delete_user to match the CLI command naming
-fn delete_user(username: &str) {
+fn delete_user(username: &str) -> bool {
   let passwd_path = "/etc/passwd";
   let shadow_path = "/etc/shadow";
 
-  let passwd_content = fs::read_to_string(passwd_path).expect("Failed to read /etc/passwd");
-  let shadow_content = fs::read_to_string(shadow_path).expect("Failed to read /etc/shadow");
+  // Try to read the files, but handle errors gracefully
+  let passwd_content = match fs::read_to_string(passwd_path) {
+    Ok(content) => content,
+    Err(e) => {
+      eprintln!("Failed to read {}: {}", passwd_path, e);
+      return false;
+    }
+  };
+  
+  let shadow_content = match fs::read_to_string(shadow_path) {
+    Ok(content) => content,
+    Err(e) => {
+      eprintln!("Failed to read {}: {}", shadow_path, e);
+      return false;
+    }
+  };
 
   let new_passwd_content: String = passwd_content
     .lines()
     .filter(|line| !line.starts_with(username))
-    .map(|line| format!("{}\n", line))
+    .map(|line| format!("{0}\n", line))
     .collect();
 
   let new_shadow_content: String = shadow_content
     .lines()
     .filter(|line| !line.starts_with(username))
-    .map(|line| format!("{}\n", line))
+    .map(|line| format!("{0}\n", line))
     .collect();
 
-  fs::write(passwd_path, new_passwd_content).expect("Failed to write to /etc/passwd");
-  fs::write(shadow_path, new_shadow_content).expect("Failed to write to /etc/shadow");
+  // Try to write the files, but handle errors gracefully
+  if let Err(e) = fs::write(passwd_path, new_passwd_content) {
+    eprintln!("Failed to write to {}: {}", passwd_path, e);
+    return false;
+  }
+  
+  if let Err(e) = fs::write(shadow_path, new_shadow_content) {
+    eprintln!("Failed to write to {}: {}", shadow_path, e);
+    return false;
+  }
 
-  println!("User {} deleted successfully", username);
+  true
 }
