@@ -2,6 +2,7 @@ use std::fs;
 
 pub(crate) struct User {
   pub(crate) username: String,
+  #[allow(dead_code)]
   password: String,
   pub(crate) uid: u32,
   pub(crate) gid: u32,
