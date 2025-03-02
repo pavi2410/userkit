@@ -32,7 +32,6 @@ userkit <domain> <action> [options]
 - `role`: Role-based access control
 - `guest`: Guest and temporary account management
 - `config`: Tool configuration
-- `shell`: Shell access and user switching
 
 ## Feature Set
 
@@ -48,6 +47,8 @@ userkit <domain> <action> [options]
 | `userkit user lock <username>` | Lock user account |
 | `userkit user unlock <username>` | Unlock user account |
 | `userkit user passwd <username>` | Change user password |
+| `userkit user shell --profile <profile>` | Switch to a user and start a shell session |
+| `userkit user shell --temp` | Create a temporary user and start a shell session |
 
 ### 2. Group Management
 
@@ -92,13 +93,6 @@ userkit <domain> <action> [options]
 | `userkit guest info <name>` | Show guest account details |
 | `userkit guest shell [options]` | Spawn a temporary shell with a one-off guest account |
 | `userkit guest expire <name> <time>` | Set expiration for a guest account |
-
-### 6. Shell Access
-
-| Command | Description |
-|---------|-------------|
-| `userkit shell --profile <profile>` | Switch to a user and start a shell session |
-| `userkit shell --temp` | Create a temporary user and start a shell session |
 
 ## Technical Implementation
 

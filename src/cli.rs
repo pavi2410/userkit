@@ -34,10 +34,6 @@ pub enum Domains {
   /// Tool configuration
   #[command(subcommand)]
   Config(ConfigCommands),
-
-  /// Shell access and user switching
-  #[command(subcommand)]
-  Shell(ShellCommands),
 }
 
 #[derive(Subcommand)]
@@ -128,6 +124,12 @@ pub enum UserCommands {
   Passwd {
     /// Username to change password for
     username: String,
+  },
+
+  /// Start a shell session
+  Shell {
+    /// Username to switch to
+    username: Option<String>,
   },
 }
 
@@ -338,20 +340,6 @@ pub enum ConfigCommands {
 
   /// Reset configuration to defaults
   Reset,
-}
-
-#[derive(Subcommand)]
-pub enum ShellCommands {
-  /// Start a shell session
-  #[command(name = "shell")]
-  Shell {
-    /// Username to switch to
-    #[arg(long)]
-    username: Option<String>,
-    /// Use temporary profile
-    #[arg(long)]
-    temp: bool,
-  },
 }
 
 #[derive(ValueEnum, Clone)]

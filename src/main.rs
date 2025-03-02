@@ -1,9 +1,8 @@
 mod cli;
 mod user;
-mod shell;
 
 use clap::Parser;
-use cli::{Cli, Domains, ListFormat, ShellCommands, UserCommands};
+use cli::{Cli, Domains, ListFormat, UserCommands};
 
 // CLI structure is now defined in cli.rs
 
@@ -17,28 +16,10 @@ fn main() {
     Domains::Role(_) => println!("Role management not implemented yet"),
     Domains::Guest(_) => println!("Guest account management not implemented yet"),
     Domains::Config(_) => println!("Configuration management not implemented yet"),
-    Domains::Shell(cmd) => handle_shell_commands(cmd),
   }
 }
 
-fn handle_shell_commands(cmd: &ShellCommands) {
-  match cmd {
-    ShellCommands::Shell { username, temp } => {
-      if *temp {
-        if !shell::create_temp_shell() {
-          std::process::exit(1);
-        }
-      } else if let Some(user) = username {
-        if !shell::switch_to_profile(user) {
-          std::process::exit(1);
-        }
-      } else {
-        eprintln!("Error: Either --username or --temp must be specified");
-        std::process::exit(1);
-      }
-    }
-  }
-}
+
 
 fn handle_user_commands(cmd: &UserCommands) {
   match cmd {
@@ -108,6 +89,22 @@ fn handle_user_commands(cmd: &UserCommands) {
     }
     UserCommands::Passwd { username } => {
       println!("Password for {} changed successfully", username);
+    }
+    UserCommands::Shell { username } => {
+      match username {
+        Some(username) => {
+          // check if user exists
+          if user::user_info(username) {
+            println!("Switching to profile: {}", username);
+          } else {
+            eprintln!("Error: User {} not found", username);
+            std::process::exit(1);
+          }
+        }
+        None => {
+          println!("Starting temporary shell session");
+        }
+      }
     }
   }
 }
