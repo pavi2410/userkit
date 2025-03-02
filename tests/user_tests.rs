@@ -2,12 +2,19 @@ use assert_cmd::prelude::*;
 use predicates::prelude::*;
 use std::process::Command;
 
-fn run_userkit_command(subcommands: Vec<&str>, run_privileged: bool) -> &mut Command {
-  let mut cmd = if run_privileged {
-    Command::new("sudo").arg("cargo").arg("run").arg("--")
-  } else {
-    Command::new("cargo").arg("run").arg("--")
-  };
+fn run_userkit_command(subcommands: Vec<&str>) -> Command {
+  let mut cmd = Command::new("./target/debug/userkit");
+
+  for subcmd in subcommands {
+    cmd.arg(subcmd);
+  }
+
+  cmd
+}
+
+fn sudo_run_userkit_command(subcommands: Vec<&str>) -> Command {
+  let mut cmd = Command::new("sudo");
+  cmd.arg("./target/debug/userkit");
 
   for subcmd in subcommands {
     cmd.arg(subcmd);
@@ -18,7 +25,7 @@ fn run_userkit_command(subcommands: Vec<&str>, run_privileged: bool) -> &mut Com
 
 #[test]
 fn test_user_add() {
-  let mut cmd = run_userkit_command(vec!["user", "add", "testuser"], true);
+  let mut cmd = sudo_run_userkit_command(vec!["user", "add", "testuser"]);
 
   cmd
     .assert()
@@ -28,18 +35,15 @@ fn test_user_add() {
 
 #[test]
 fn test_user_add_with_options() {
-  let mut cmd = run_userkit_command(
-    vec![
-      "user",
-      "add",
-      "testuser2",
-      "--home-dir",
-      "/home/testuser2",
-      "--shell",
-      "/bin/bash",
-    ],
-    true,
-  );
+  let mut cmd = sudo_run_userkit_command(vec![
+    "user",
+    "add",
+    "testuser2",
+    "--home-dir",
+    "/home/testuser2",
+    "--shell",
+    "/bin/bash",
+  ]);
 
   cmd
     .assert()
@@ -49,7 +53,7 @@ fn test_user_add_with_options() {
 
 #[test]
 fn test_user_list() {
-  let mut cmd = run_userkit_command(vec!["user", "list"], false);
+  let mut cmd = run_userkit_command(vec!["user", "list"]);
 
   cmd
     .assert()
@@ -59,14 +63,14 @@ fn test_user_list() {
 
 #[test]
 fn test_user_list_json_format() {
-  let mut cmd = run_userkit_command(vec!["user", "list", "--format", "json"], false);
+  let mut cmd = run_userkit_command(vec!["user", "list", "--format", "json"]);
 
   cmd.assert().success().stdout(predicate::str::contains("["));
 }
 
 #[test]
 fn test_user_info_existing() {
-  let mut cmd = run_userkit_command(vec!["user", "info", "root"], false); // Using root user which is guaranteed to exist
+  let mut cmd = run_userkit_command(vec!["user", "info", "root"]); // Using root user which is guaranteed to exist
 
   cmd
     .assert()
@@ -76,7 +80,7 @@ fn test_user_info_existing() {
 
 #[test]
 fn test_user_info_nonexistent() {
-  let mut cmd = run_userkit_command(vec!["user", "info", "nonexistentuser"], false); // Using a user that definitely doesn't exist
+  let mut cmd = run_userkit_command(vec!["user", "info", "nonexistentuser"]); // Using a user that definitely doesn't exist
 
   cmd
     .assert()
@@ -86,7 +90,7 @@ fn test_user_info_nonexistent() {
 
 #[test]
 fn test_user_remove() {
-  let mut cmd = run_userkit_command(vec!["user", "remove", "testuser"], true);
+  let mut cmd = sudo_run_userkit_command(vec!["user", "remove", "testuser"]);
 
   cmd
     .assert()
@@ -96,7 +100,7 @@ fn test_user_remove() {
 
 #[test]
 fn test_user_remove_with_home() {
-  let mut cmd = run_userkit_command(vec!["user", "remove", "testuser2", "--remove-home"], true);
+  let mut cmd = sudo_run_userkit_command(vec!["user", "remove", "testuser2", "--remove-home"]);
 
   cmd
     .assert()
@@ -106,10 +110,7 @@ fn test_user_remove_with_home() {
 
 #[test]
 fn test_user_modify() {
-  let mut cmd = run_userkit_command(
-    vec!["user", "modify", "testuser", "--shell", "/bin/zsh"],
-    true,
-  );
+  let mut cmd = sudo_run_userkit_command(vec!["user", "modify", "testuser", "--shell", "/bin/zsh"]);
 
   cmd
     .assert()
@@ -119,7 +120,7 @@ fn test_user_modify() {
 
 #[test]
 fn test_user_lock() {
-  let mut cmd = run_userkit_command(vec!["user", "lock", "testuser"], true);
+  let mut cmd = sudo_run_userkit_command(vec!["user", "lock", "testuser"]);
 
   cmd
     .assert()
@@ -129,7 +130,7 @@ fn test_user_lock() {
 
 #[test]
 fn test_user_unlock() {
-  let mut cmd = run_userkit_command(vec!["user", "unlock", "testuser"], true);
+  let mut cmd = sudo_run_userkit_command(vec!["user", "unlock", "testuser"]);
 
   cmd
     .assert()
@@ -139,7 +140,7 @@ fn test_user_unlock() {
 
 #[test]
 fn test_user_passwd() {
-  let mut cmd = run_userkit_command(vec!["user", "passwd", "testuser"], true);
+  let mut cmd = sudo_run_userkit_command(vec!["user", "passwd", "testuser"]);
 
   cmd
     .assert()
@@ -149,7 +150,7 @@ fn test_user_passwd() {
 
 #[test]
 fn test_user_add_invalid() {
-  let mut cmd = run_userkit_command(vec!["user", "add", "root"], true); // Trying to add a user that likely already exists
+  let mut cmd = sudo_run_userkit_command(vec!["user", "add", "root"]); // Trying to add a user that likely already exists
 
   cmd
     .assert()
