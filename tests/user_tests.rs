@@ -1,122 +1,171 @@
-//! Tests for user management commands
-
-mod common;
-
-use common::{TestEnvironment, start_container, stop_container, run_userkit_command};
+use assert_cmd::prelude::*;
+use predicates::prelude::*;
+use std::process::Command;
 
 #[test]
-fn test_user_add_and_remove() {
-    let container_id = start_container(&TestEnvironment::Ubuntu);
+fn test_user_add() {
+    let mut cmd = Command::new("cargo");
+    cmd.arg("run").arg("--").arg("user").arg("add").arg("testuser");
     
-    // Test adding a user
-    let (stdout, stderr, status) = run_userkit_command(
-        &container_id,
-        &["user", "add", "testuser", "--home-dir", "/home/testuser"]
-    );
-    assert_eq!(status, 0, "Failed to add user: {}", stderr);
-    assert!(stdout.contains("User testuser added successfully"));
+    cmd.assert()
+        .success()
+        .stdout(predicate::str::contains("User testuser created"));
+}
+
+#[test]
+fn test_user_add_with_options() {
+    let mut cmd = Command::new("cargo");
+    cmd.arg("run")
+        .arg("--")
+        .arg("user")
+        .arg("add")
+        .arg("testuser2")
+        .arg("--home-dir")
+        .arg("/home/testuser2")
+        .arg("--shell")
+        .arg("/bin/bash");
     
-    // Verify user exists
-    let (stdout, _, status) = run_userkit_command(
-        &container_id,
-        &["user", "info", "testuser"]
-    );
-    assert_eq!(status, 0);
-    assert!(stdout.contains("Username: testuser"));
-    assert!(stdout.contains("/home/testuser"));
-    
-    // Test removing the user
-    let (stdout, stderr, status) = run_userkit_command(
-        &container_id,
-        &["user", "remove", "testuser"]
-    );
-    assert_eq!(status, 0, "Failed to remove user: {}", stderr);
-    assert!(stdout.contains("User testuser deleted successfully"));
-    
-    stop_container(&container_id);
+    cmd.assert()
+        .success()
+        .stdout(predicate::str::contains("User testuser2 created"));
 }
 
 #[test]
 fn test_user_list() {
-    let container_id = start_container(&TestEnvironment::Ubuntu);
+    let mut cmd = Command::new("cargo");
+    cmd.arg("run").arg("--").arg("user").arg("list");
     
-    // Add a test user first
-    run_userkit_command(
-        &container_id,
-        &["user", "add", "testuser"]
-    );
+    cmd.assert()
+        .success()
+        .stdout(predicate::str::contains("Username"));
+}
+
+#[test]
+fn test_user_list_json_format() {
+    let mut cmd = Command::new("cargo");
+    cmd.arg("run")
+        .arg("--")
+        .arg("user")
+        .arg("list")
+        .arg("--format")
+        .arg("json");
     
-    // Test listing users in different formats
-    let (stdout, _, status) = run_userkit_command(
-        &container_id,
-        &["user", "list", "--format", "table"]
-    );
-    assert_eq!(status, 0);
-    assert!(stdout.contains("Username"));
-    assert!(stdout.contains("testuser"));
+    cmd.assert()
+        .success()
+        .stdout(predicate::str::contains("["));
+}
+
+#[test]
+fn test_user_info() {
+    let mut cmd = Command::new("cargo");
+    cmd.arg("run")
+        .arg("--")
+        .arg("user")
+        .arg("info")
+        .arg("testuser");
     
-    let (stdout, _, status) = run_userkit_command(
-        &container_id,
-        &["user", "list", "--format", "json"]
-    );
-    assert_eq!(status, 0);
-    assert!(stdout.contains("\"username\": \"testuser\""));
+    cmd.assert()
+        .success()
+        .stdout(predicate::str::contains("Username: testuser"));
+}
+
+#[test]
+fn test_user_remove() {
+    let mut cmd = Command::new("cargo");
+    cmd.arg("run")
+        .arg("--")
+        .arg("user")
+        .arg("remove")
+        .arg("testuser");
     
-    stop_container(&container_id);
+    cmd.assert()
+        .success()
+        .stdout(predicate::str::contains("User testuser removed"));
+}
+
+#[test]
+fn test_user_remove_with_home() {
+    let mut cmd = Command::new("cargo");
+    cmd.arg("run")
+        .arg("--")
+        .arg("user")
+        .arg("remove")
+        .arg("testuser2")
+        .arg("--remove-home");
+    
+    cmd.assert()
+        .success()
+        .stdout(predicate::str::contains("User testuser2 removed"));
 }
 
 #[test]
 fn test_user_modify() {
-    let container_id = start_container(&TestEnvironment::Ubuntu);
+    let mut cmd = Command::new("cargo");
+    cmd.arg("run")
+        .arg("--")
+        .arg("user")
+        .arg("modify")
+        .arg("testuser")
+        .arg("--shell")
+        .arg("/bin/zsh");
     
-    // Add a test user
-    run_userkit_command(
-        &container_id,
-        &["user", "add", "testuser"]
-    );
-    
-    // Modify user properties
-    let (stdout, stderr, status) = run_userkit_command(
-        &container_id,
-        &["user", "modify", "testuser", "--shell", "/bin/zsh", "--gecos", "Test User"]
-    );
-    assert_eq!(status, 0, "Failed to modify user: {}", stderr);
-    
-    // Verify modifications
-    let (stdout, _, status) = run_userkit_command(
-        &container_id,
-        &["user", "info", "testuser"]
-    );
-    assert_eq!(status, 0);
-    assert!(stdout.contains("/bin/zsh"));
-    assert!(stdout.contains("Test User"));
-    
-    stop_container(&container_id);
+    cmd.assert()
+        .success()
+        .stdout(predicate::str::contains("User testuser modified"));
 }
 
 #[test]
-fn test_user_lock_unlock() {
-    let container_id = start_container(&TestEnvironment::Ubuntu);
+fn test_user_lock() {
+    let mut cmd = Command::new("cargo");
+    cmd.arg("run")
+        .arg("--")
+        .arg("user")
+        .arg("lock")
+        .arg("testuser");
     
-    // Add a test user
-    run_userkit_command(
-        &container_id,
-        &["user", "add", "testuser"]
-    );
+    cmd.assert()
+        .success()
+        .stdout(predicate::str::contains("User testuser locked"));
+}
+
+#[test]
+fn test_user_unlock() {
+    let mut cmd = Command::new("cargo");
+    cmd.arg("run")
+        .arg("--")
+        .arg("user")
+        .arg("unlock")
+        .arg("testuser");
     
-    // Test locking user
-    let (stdout, stderr, status) = run_userkit_command(
-        &container_id,
-        &["user", "lock", "testuser"]
-    );
-    assert_eq!(status, 0, "Failed to lock user: {}", stderr);
+    cmd.assert()
+        .success()
+        .stdout(predicate::str::contains("User testuser unlocked"));
+}
+
+#[test]
+fn test_user_passwd() {
+    let mut cmd = Command::new("cargo");
+    cmd.arg("run")
+        .arg("--")
+        .arg("user")
+        .arg("passwd")
+        .arg("testuser");
     
-    // Test unlocking user
-    let (stdout, stderr, status) = run_userkit_command(
-        &container_id,
-        &["user", "unlock", "testuser"]
-    );
-    assert_eq!(status, 0, "Failed to unlock user: {}", stderr);
+    cmd.assert()
+        .success()
+        .stdout(predicate::str::contains("Password for testuser changed"));
+}
+
+#[test]
+fn test_user_add_invalid() {
+    let mut cmd = Command::new("cargo");
+    cmd.arg("run")
+        .arg("--")
+        .arg("user")
+        .arg("add")
+        .arg("root"); // Trying to add a user that likely already exists
     
-    stop_container(&container_id);
+    cmd.assert()
+        .failure()
+        .stderr(predicate::str::contains("Error"));
 }

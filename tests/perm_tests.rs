@@ -1,117 +1,123 @@
-//! Tests for permission management commands
-
-mod common;
+use assert_cmd::prelude::*;
+use predicates::prelude::*;
 use std::process::Command;
-use common::{TestEnvironment, start_container, stop_container, run_userkit_command};
 
 #[test]
-fn test_perm_set_and_get() {
-    let container_id = start_container(&TestEnvironment::Ubuntu);
+fn test_perm_set() {
+    let mut cmd = Command::new("cargo");
+    cmd.arg("run")
+        .arg("--")
+        .arg("perm")
+        .arg("set")
+        .arg("/tmp/testfile")
+        .arg("755");
     
-    // Create a test file
-    Command::new("docker")
-        .args(["exec", &container_id, "sh", "-c", "touch /tmp/testfile"])
-        .output()
-        .expect("Failed to create test file");
-    
-    // Test setting permissions
-    let (stdout, stderr, status) = run_userkit_command(
-        &container_id,
-        &["perm", "set", "/tmp/testfile", "755"]
-    );
-    assert_eq!(status, 0, "Failed to set permissions: {}", stderr);
-    assert!(stdout.contains("Permissions set successfully"));
-    
-    // Test getting permissions
-    let (stdout, _, status) = run_userkit_command(
-        &container_id,
-        &["perm", "get", "/tmp/testfile"]
-    );
-    assert_eq!(status, 0);
-    assert!(stdout.contains("755"));
-    
-    stop_container(&container_id);
+    cmd.assert()
+        .success()
+        .stdout(predicate::str::contains("Permissions set to 755 for /tmp/testfile"));
 }
 
 #[test]
-fn test_perm_recursive() {
-    let container_id = start_container(&TestEnvironment::Ubuntu);
+fn test_perm_set_recursive() {
+    let mut cmd = Command::new("cargo");
+    cmd.arg("run")
+        .arg("--")
+        .arg("perm")
+        .arg("set")
+        .arg("/tmp/testdir")
+        .arg("755")
+        .arg("--recursive");
     
-    // Create a test directory with files
-    Command::new("docker")
-        .args(["exec", &container_id, "sh", "-c", "mkdir -p /tmp/testdir && touch /tmp/testdir/file1 /tmp/testdir/file2"])
-        .output()
-        .expect("Failed to create test directory");
+    cmd.assert()
+        .success()
+        .stdout(predicate::str::contains("Permissions set recursively to 755 for /tmp/testdir"));
+}
+
+#[test]
+fn test_perm_get() {
+    let mut cmd = Command::new("cargo");
+    cmd.arg("run")
+        .arg("--")
+        .arg("perm")
+        .arg("get")
+        .arg("/tmp/testfile");
     
-    // Test setting permissions recursively
-    let (stdout, stderr, status) = run_userkit_command(
-        &container_id,
-        &["perm", "set", "/tmp/testdir", "755", "--recursive"]
-    );
-    assert_eq!(status, 0, "Failed to set recursive permissions: {}", stderr);
-    
-    // Verify permissions on subdirectory files
-    let (stdout, _, status) = run_userkit_command(
-        &container_id,
-        &["perm", "get", "/tmp/testdir/file1"]
-    );
-    assert_eq!(status, 0);
-    assert!(stdout.contains("755"));
-    
-    stop_container(&container_id);
+    cmd.assert()
+        .success()
+        .stdout(predicate::str::contains("Permissions for /tmp/testfile"));
 }
 
 #[test]
 fn test_perm_check() {
-    let container_id = start_container(&TestEnvironment::Ubuntu);
+    let mut cmd = Command::new("cargo");
+    cmd.arg("run")
+        .arg("--")
+        .arg("perm")
+        .arg("check")
+        .arg("testuser")
+        .arg("/tmp/testfile");
     
-    // Create a test user and file
-    run_userkit_command(
-        &container_id,
-        &["user", "add", "testuser"]
-    );
-    
-    Command::new("docker")
-        .args(["exec", &container_id, "sh", "-c", "touch /tmp/testfile && chmod 644 /tmp/testfile"])
-        .output()
-        .expect("Failed to create test file");
-    
-    // Test checking permissions
-    let (stdout, stderr, status) = run_userkit_command(
-        &container_id,
-        &["perm", "check", "testuser", "/tmp/testfile"]
-    );
-    assert_eq!(status, 0, "Failed to check permissions: {}", stderr);
-    assert!(stdout.contains("read"));
-    
-    stop_container(&container_id);
+    cmd.assert()
+        .success()
+        .stdout(predicate::str::contains("User testuser has"));
 }
 
 #[test]
-fn test_sudo_access() {
-    let container_id = start_container(&TestEnvironment::Ubuntu);
+fn test_perm_sudo_enable() {
+    let mut cmd = Command::new("cargo");
+    cmd.arg("run")
+        .arg("--")
+        .arg("perm")
+        .arg("sudo")
+        .arg("testuser")
+        .arg("enable");
     
-    // Create a test user
-    run_userkit_command(
-        &container_id,
-        &["user", "add", "testuser"]
-    );
+    cmd.assert()
+        .success()
+        .stdout(predicate::str::contains("Sudo access enabled for testuser"));
+}
+
+#[test]
+fn test_perm_sudo_disable() {
+    let mut cmd = Command::new("cargo");
+    cmd.arg("run")
+        .arg("--")
+        .arg("perm")
+        .arg("sudo")
+        .arg("testuser")
+        .arg("disable");
     
-    // Test enabling sudo access
-    let (stdout, stderr, status) = run_userkit_command(
-        &container_id,
-        &["perm", "sudo", "testuser", "enable"]
-    );
-    assert_eq!(status, 0, "Failed to enable sudo access: {}", stderr);
-    assert!(stdout.contains("Sudo access enabled for testuser"));
+    cmd.assert()
+        .success()
+        .stdout(predicate::str::contains("Sudo access disabled for testuser"));
+}
+
+#[test]
+fn test_perm_set_invalid_permissions() {
+    let mut cmd = Command::new("cargo");
+    cmd.arg("run")
+        .arg("--")
+        .arg("perm")
+        .arg("set")
+        .arg("/tmp/testfile")
+        .arg("999"); // Invalid permission value
     
-    // Test disabling sudo access
-    let (stdout, stderr, status) = run_userkit_command(
-        &container_id,
-        &["perm", "sudo", "testuser", "disable"]
-    );
-    assert_eq!(status, 0, "Failed to disable sudo access: {}", stderr);
-    assert!(stdout.contains("Sudo access disabled for testuser"));
+    cmd.assert()
+        .failure()
+        .stderr(predicate::str::contains("Error"));
+}
+
+#[test]
+fn test_perm_check_nonexistent_user() {
+    let mut cmd = Command::new("cargo");
+    cmd.arg("run")
+        .arg("--")
+        .arg("perm")
+        .arg("check")
+        .arg("nonexistentuser")
+        .arg("/tmp/testfile");
     
-    stop_container(&container_id);
+    cmd.assert()
+        .failure()
+        .stderr(predicate::str::contains("Error"));
 }

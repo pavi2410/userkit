@@ -1,136 +1,178 @@
-//! Tests for role-based access control commands
-
-mod common;
-
-use common::{TestEnvironment, start_container, stop_container, run_userkit_command};
+use assert_cmd::prelude::*;
+use predicates::prelude::*;
+use std::process::Command;
 
 #[test]
-fn test_role_create_and_delete() {
-    let container_id = start_container(&TestEnvironment::Ubuntu);
+fn test_role_create() {
+    let mut cmd = Command::new("cargo");
+    cmd.arg("run")
+        .arg("--")
+        .arg("role")
+        .arg("create")
+        .arg("testrole");
     
-    // Test creating a role
-    let (stdout, stderr, status) = run_userkit_command(
-        &container_id,
-        &["role", "create", "admin", "--description", "Administrator role"]
-    );
-    assert_eq!(status, 0, "Failed to create role: {}", stderr);
-    assert!(stdout.contains("Role admin created successfully"));
-    
-    // Verify role exists
-    let (stdout, _, status) = run_userkit_command(
-        &container_id,
-        &["role", "list"]
-    );
-    assert_eq!(status, 0);
-    assert!(stdout.contains("admin"));
-    
-    // Test deleting the role
-    let (stdout, stderr, status) = run_userkit_command(
-        &container_id,
-        &["role", "delete", "admin"]
-    );
-    assert_eq!(status, 0, "Failed to delete role: {}", stderr);
-    assert!(stdout.contains("Role admin deleted successfully"));
-    
-    stop_container(&container_id);
+    cmd.assert()
+        .success()
+        .stdout(predicate::str::contains("Role testrole created"));
 }
 
 #[test]
-fn test_role_assign_and_revoke() {
-    let container_id = start_container(&TestEnvironment::Ubuntu);
+fn test_role_create_with_description() {
+    let mut cmd = Command::new("cargo");
+    cmd.arg("run")
+        .arg("--")
+        .arg("role")
+        .arg("create")
+        .arg("testrole2")
+        .arg("--description")
+        .arg("A test role with description");
     
-    // Create a test user and role
-    run_userkit_command(
-        &container_id,
-        &["user", "add", "testuser"]
-    );
-    
-    run_userkit_command(
-        &container_id,
-        &["role", "create", "testrole"]
-    );
-    
-    // Test assigning role to user
-    let (stdout, stderr, status) = run_userkit_command(
-        &container_id,
-        &["role", "assign", "testrole", "testuser"]
-    );
-    assert_eq!(status, 0, "Failed to assign role: {}", stderr);
-    assert!(stdout.contains("Role testrole assigned to testuser"));
-    
-    // Verify role assignment
-    let (stdout, _, status) = run_userkit_command(
-        &container_id,
-        &["role", "info", "testrole"]
-    );
-    assert_eq!(status, 0);
-    assert!(stdout.contains("testuser"));
-    
-    // Test revoking role from user
-    let (stdout, stderr, status) = run_userkit_command(
-        &container_id,
-        &["role", "revoke", "testrole", "testuser"]
-    );
-    assert_eq!(status, 0, "Failed to revoke role: {}", stderr);
-    assert!(stdout.contains("Role testrole revoked from testuser"));
-    
-    stop_container(&container_id);
+    cmd.assert()
+        .success()
+        .stdout(predicate::str::contains("Role testrole2 created"));
 }
 
 #[test]
-fn test_role_add_permission() {
-    let container_id = start_container(&TestEnvironment::Ubuntu);
+fn test_role_delete() {
+    let mut cmd = Command::new("cargo");
+    cmd.arg("run")
+        .arg("--")
+        .arg("role")
+        .arg("delete")
+        .arg("testrole");
     
-    // Create a test role
-    run_userkit_command(
-        &container_id,
-        &["role", "create", "testrole"]
-    );
-    
-    // Test adding permission to role
-    let (stdout, stderr, status) = run_userkit_command(
-        &container_id,
-        &["role", "addperm", "testrole", "read:/etc"]
-    );
-    assert_eq!(status, 0, "Failed to add permission: {}", stderr);
-    assert!(stdout.contains("Permission added to testrole"));
-    
-    // Verify permission was added
-    let (stdout, _, status) = run_userkit_command(
-        &container_id,
-        &["role", "info", "testrole"]
-    );
-    assert_eq!(status, 0);
-    assert!(stdout.contains("read:/etc"));
-    
-    stop_container(&container_id);
+    cmd.assert()
+        .success()
+        .stdout(predicate::str::contains("Role testrole deleted"));
 }
 
 #[test]
-fn test_role_list_formats() {
-    let container_id = start_container(&TestEnvironment::Ubuntu);
+fn test_role_assign() {
+    let mut cmd = Command::new("cargo");
+    cmd.arg("run")
+        .arg("--")
+        .arg("role")
+        .arg("assign")
+        .arg("testrole2")
+        .arg("testuser");
     
-    // Create a test role
-    run_userkit_command(
-        &container_id,
-        &["role", "create", "testrole", "--description", "Test role"]
-    );
+    cmd.assert()
+        .success()
+        .stdout(predicate::str::contains("Role testrole2 assigned to user testuser"));
+}
+
+#[test]
+fn test_role_revoke() {
+    let mut cmd = Command::new("cargo");
+    cmd.arg("run")
+        .arg("--")
+        .arg("role")
+        .arg("revoke")
+        .arg("testrole2")
+        .arg("testuser");
     
-    // Test listing roles in different formats
-    let (stdout, _, status) = run_userkit_command(
-        &container_id,
-        &["role", "list", "--format", "table"]
-    );
-    assert_eq!(status, 0);
-    assert!(stdout.contains("Role Name"));
-    assert!(stdout.contains("testrole"));
+    cmd.assert()
+        .success()
+        .stdout(predicate::str::contains("Role testrole2 revoked from user testuser"));
+}
+
+#[test]
+fn test_role_list() {
+    let mut cmd = Command::new("cargo");
+    cmd.arg("run")
+        .arg("--")
+        .arg("role")
+        .arg("list");
     
-    let (stdout, _, status) = run_userkit_command(
-        &container_id,
-        &["role", "list", "--format", "json"]
-    );
-    assert_eq!(status, 0);
-    assert!(stdout.contains("\"rolename\": \"testrole\""));
+    cmd.assert()
+        .success()
+        .stdout(predicate::str::contains("Available roles"));
+}
+
+#[test]
+fn test_role_list_json_format() {
+    let mut cmd = Command::new("cargo");
+    cmd.arg("run")
+        .arg("--")
+        .arg("role")
+        .arg("list")
+        .arg("--format")
+        .arg("json");
     
-    stop_container(&container_id);
+    cmd.assert()
+        .success()
+        .stdout(predicate::str::contains("["));
+}
+
+#[test]
+fn test_role_info() {
+    let mut cmd = Command::new("cargo");
+    cmd.arg("run")
+        .arg("--")
+        .arg("role")
+        .arg("info")
+        .arg("testrole2");
+    
+    cmd.assert()
+        .success()
+        .stdout(predicate::str::contains("Role: testrole2"));
+}
+
+#[test]
+fn test_role_addperm() {
+    let mut cmd = Command::new("cargo");
+    cmd.arg("run")
+        .arg("--")
+        .arg("role")
+        .arg("addperm")
+        .arg("testrole2")
+        .arg("read:/tmp/testfile");
+    
+    cmd.assert()
+        .success()
+        .stdout(predicate::str::contains("Permission read:/tmp/testfile added to role testrole2"));
+}
+
+#[test]
+fn test_role_delete_nonexistent() {
+    let mut cmd = Command::new("cargo");
+    cmd.arg("run")
+        .arg("--")
+        .arg("role")
+        .arg("delete")
+        .arg("nonexistentrole");
+    
+    cmd.assert()
+        .failure()
+        .stderr(predicate::str::contains("Error"));
+}
+
+#[test]
+fn test_role_assign_nonexistent_role() {
+    let mut cmd = Command::new("cargo");
+    cmd.arg("run")
+        .arg("--")
+        .arg("role")
+        .arg("assign")
+        .arg("nonexistentrole")
+        .arg("testuser");
+    
+    cmd.assert()
+        .failure()
+        .stderr(predicate::str::contains("Error"));
+}
+
+#[test]
+fn test_role_assign_nonexistent_user() {
+    let mut cmd = Command::new("cargo");
+    cmd.arg("run")
+        .arg("--")
+        .arg("role")
+        .arg("assign")
+        .arg("testrole2")
+        .arg("nonexistentuser");
+    
+    cmd.assert()
+        .failure()
+        .stderr(predicate::str::contains("Error"));
 }

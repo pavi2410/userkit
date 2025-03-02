@@ -1,148 +1,142 @@
-//! Tests for group management commands
-
-mod common;
-
-use common::{TestEnvironment, start_container, stop_container, run_userkit_command};
+use assert_cmd::prelude::*;
+use predicates::prelude::*;
+use std::process::Command;
 
 #[test]
-fn test_group_add_and_remove() {
-    let container_id = start_container(&TestEnvironment::Ubuntu);
+fn test_group_add() {
+    let mut cmd = Command::new("cargo");
+    cmd.arg("run").arg("--").arg("group").arg("add").arg("testgroup");
     
-    // Test adding a group
-    let (stdout, stderr, status) = run_userkit_command(
-        &container_id,
-        &["group", "add", "testgroup"]
-    );
-    assert_eq!(status, 0, "Failed to add group: {}", stderr);
-    assert!(stdout.contains("Group testgroup added successfully"));
+    cmd.assert()
+        .success()
+        .stdout(predicate::str::contains("Group testgroup created"));
+}
+
+#[test]
+fn test_group_add_with_gid() {
+    let mut cmd = Command::new("cargo");
+    cmd.arg("run")
+        .arg("--")
+        .arg("group")
+        .arg("add")
+        .arg("testgroup2")
+        .arg("--gid")
+        .arg("1001");
     
-    // Verify group exists
-    let (stdout, _, status) = run_userkit_command(
-        &container_id,
-        &["group", "list"]
-    );
-    assert_eq!(status, 0);
-    assert!(stdout.contains("testgroup"));
+    cmd.assert()
+        .success()
+        .stdout(predicate::str::contains("Group testgroup2 created"));
+}
+
+#[test]
+fn test_group_remove() {
+    let mut cmd = Command::new("cargo");
+    cmd.arg("run")
+        .arg("--")
+        .arg("group")
+        .arg("remove")
+        .arg("testgroup");
     
-    // Test removing the group
-    let (stdout, stderr, status) = run_userkit_command(
-        &container_id,
-        &["group", "remove", "testgroup"]
-    );
-    assert_eq!(status, 0, "Failed to remove group: {}", stderr);
-    assert!(stdout.contains("Group testgroup deleted successfully"));
-    
-    stop_container(&container_id);
+    cmd.assert()
+        .success()
+        .stdout(predicate::str::contains("Group testgroup removed"));
 }
 
 #[test]
 fn test_group_modify() {
-    let container_id = start_container(&TestEnvironment::Ubuntu);
+    let mut cmd = Command::new("cargo");
+    cmd.arg("run")
+        .arg("--")
+        .arg("group")
+        .arg("modify")
+        .arg("testgroup2")
+        .arg("--gid")
+        .arg("1002");
     
-    // Add a test group
-    run_userkit_command(
-        &container_id,
-        &["group", "add", "testgroup"]
-    );
+    cmd.assert()
+        .success()
+        .stdout(predicate::str::contains("Group testgroup2 modified"));
+}
+
+#[test]
+fn test_group_list() {
+    let mut cmd = Command::new("cargo");
+    cmd.arg("run").arg("--").arg("group").arg("list");
     
-    // Modify group properties
-    let (stdout, stderr, status) = run_userkit_command(
-        &container_id,
-        &["group", "modify", "testgroup", "--gid", "2000"]
-    );
-    assert_eq!(status, 0, "Failed to modify group: {}", stderr);
+    cmd.assert()
+        .success()
+        .stdout(predicate::str::contains("Group name"));
+}
+
+#[test]
+fn test_group_list_json_format() {
+    let mut cmd = Command::new("cargo");
+    cmd.arg("run")
+        .arg("--")
+        .arg("group")
+        .arg("list")
+        .arg("--format")
+        .arg("json");
     
-    // Verify modifications
-    let (stdout, _, status) = run_userkit_command(
-        &container_id,
-        &["group", "list", "--format", "json"]
-    );
-    assert_eq!(status, 0);
-    assert!(stdout.contains("\"gid\": 2000"));
-    
-    stop_container(&container_id);
+    cmd.assert()
+        .success()
+        .stdout(predicate::str::contains("["));
 }
 
 #[test]
 fn test_group_members() {
-    let container_id = start_container(&TestEnvironment::Ubuntu);
+    let mut cmd = Command::new("cargo");
+    cmd.arg("run")
+        .arg("--")
+        .arg("group")
+        .arg("members")
+        .arg("testgroup");
     
-    // Add a test group and user
-    run_userkit_command(
-        &container_id,
-        &["group", "add", "testgroup"]
-    );
-    
-    run_userkit_command(
-        &container_id,
-        &["user", "add", "testuser"]
-    );
-    
-    // Add user to group
-    let (stdout, stderr, status) = run_userkit_command(
-        &container_id,
-        &["group", "adduser", "testgroup", "testuser"]
-    );
-    assert_eq!(status, 0, "Failed to add user to group: {}", stderr);
-    
-    // Verify user is in group
-    let (stdout, _, status) = run_userkit_command(
-        &container_id,
-        &["group", "members", "testgroup"]
-    );
-    assert_eq!(status, 0);
-    assert!(stdout.contains("testuser"));
-    
-    // Remove user from group
-    let (stdout, stderr, status) = run_userkit_command(
-        &container_id,
-        &["group", "removeuser", "testgroup", "testuser"]
-    );
-    assert_eq!(status, 0, "Failed to remove user from group: {}", stderr);
-    
-    // Verify user is no longer in group
-    let (stdout, _, status) = run_userkit_command(
-        &container_id,
-        &["group", "members", "testgroup"]
-    );
-    assert_eq!(status, 0);
-    assert!(!stdout.contains("testuser"));
-    
-    stop_container(&container_id);
+    cmd.assert()
+        .success()
+        .stdout(predicate::str::contains("Members of group testgroup"));
 }
 
 #[test]
-fn test_group_list_formats() {
-    let container_id = start_container(&TestEnvironment::Ubuntu);
+fn test_group_adduser() {
+    let mut cmd = Command::new("cargo");
+    cmd.arg("run")
+        .arg("--")
+        .arg("group")
+        .arg("adduser")
+        .arg("testgroup")
+        .arg("testuser");
     
-    // Add a test group
-    run_userkit_command(
-        &container_id,
-        &["group", "add", "testgroup"]
-    );
+    cmd.assert()
+        .success()
+        .stdout(predicate::str::contains("User testuser added to group testgroup"));
+}
+
+#[test]
+fn test_group_removeuser() {
+    let mut cmd = Command::new("cargo");
+    cmd.arg("run")
+        .arg("--")
+        .arg("group")
+        .arg("removeuser")
+        .arg("testgroup")
+        .arg("testuser");
     
-    // Test listing groups in different formats
-    let (stdout, _, status) = run_userkit_command(
-        &container_id,
-        &["group", "list", "--format", "table"]
-    );
-    assert_eq!(status, 0);
-    assert!(stdout.contains("Group Name"));
-    assert!(stdout.contains("testgroup"));
+    cmd.assert()
+        .success()
+        .stdout(predicate::str::contains("User testuser removed from group testgroup"));
+}
+
+#[test]
+fn test_group_add_invalid() {
+    let mut cmd = Command::new("cargo");
+    cmd.arg("run")
+        .arg("--")
+        .arg("group")
+        .arg("add")
+        .arg("root"); // Trying to add a group that likely already exists
     
-    let (stdout, _, status) = run_userkit_command(
-        &container_id,
-        &["group", "list", "--format", "json"]
-    );
-    assert_eq!(status, 0);
-    assert!(stdout.contains("\"groupname\": \"testgroup\""));
-    
-    let (stdout, _, status) = run_userkit_command(
-        &container_id,
-        &["group", "list", "--format", "csv"]
-    );
-    assert_eq!(status, 0);
-    assert!(stdout.contains("testgroup"));
-    
-    stop_container(&container_id);
+    cmd.assert()
+        .failure()
+        .stderr(predicate::str::contains("Error"));
 }

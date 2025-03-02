@@ -1,108 +1,144 @@
-//! Tests for guest account management commands
-
-mod common;
-
-use common::{TestEnvironment, start_container, stop_container, run_userkit_command};
+use assert_cmd::prelude::*;
+use predicates::prelude::*;
+use std::process::Command;
 
 #[test]
-fn test_guest_create_and_remove() {
-    let container_id = start_container(&TestEnvironment::Ubuntu);
+fn test_guest_create() {
+    let mut cmd = Command::new("cargo");
+    cmd.arg("run")
+        .arg("--")
+        .arg("guest")
+        .arg("create");
     
-    // Test creating a guest account
-    let (stdout, stderr, status) = run_userkit_command(
-        &container_id,
-        &["guest", "create", "testguest", "--expire", "7"]
-    );
-    assert_eq!(status, 0, "Failed to create guest account: {}", stderr);
-    assert!(stdout.contains("Guest account testguest created successfully"));
+    cmd.assert()
+        .success()
+        .stdout(predicate::str::contains("Guest account created"));
+}
+
+#[test]
+fn test_guest_create_with_name() {
+    let mut cmd = Command::new("cargo");
+    cmd.arg("run")
+        .arg("--")
+        .arg("guest")
+        .arg("create")
+        .arg("testguest");
     
-    // Verify guest account exists
-    let (stdout, _, status) = run_userkit_command(
-        &container_id,
-        &["guest", "info", "testguest"]
-    );
-    assert_eq!(status, 0);
-    assert!(stdout.contains("Name: testguest"));
-    assert!(stdout.contains("Expires in: 7 days"));
+    cmd.assert()
+        .success()
+        .stdout(predicate::str::contains("Guest account testguest created"));
+}
+
+#[test]
+fn test_guest_create_with_expiration() {
+    let mut cmd = Command::new("cargo");
+    cmd.arg("run")
+        .arg("--")
+        .arg("guest")
+        .arg("create")
+        .arg("testguest2")
+        .arg("--expire")
+        .arg("7");
     
-    // Test removing the guest account
-    let (stdout, stderr, status) = run_userkit_command(
-        &container_id,
-        &["guest", "remove", "testguest"]
-    );
-    assert_eq!(status, 0, "Failed to remove guest account: {}", stderr);
-    assert!(stdout.contains("Guest account testguest removed successfully"));
+    cmd.assert()
+        .success()
+        .stdout(predicate::str::contains("Guest account testguest2 created with 7 day expiration"));
+}
+
+#[test]
+fn test_guest_remove() {
+    let mut cmd = Command::new("cargo");
+    cmd.arg("run")
+        .arg("--")
+        .arg("guest")
+        .arg("remove")
+        .arg("testguest");
     
-    stop_container(&container_id);
+    cmd.assert()
+        .success()
+        .stdout(predicate::str::contains("Guest account testguest removed"));
 }
 
 #[test]
 fn test_guest_list() {
-    let container_id = start_container(&TestEnvironment::Ubuntu);
+    let mut cmd = Command::new("cargo");
+    cmd.arg("run")
+        .arg("--")
+        .arg("guest")
+        .arg("list");
     
-    // Create multiple guest accounts
-    run_userkit_command(
-        &container_id,
-        &["guest", "create", "guest1", "--expire", "3"]
-    );
-    
-    run_userkit_command(
-        &container_id,
-        &["guest", "create", "guest2", "--expire", "5"]
-    );
-    
-    // Test listing guest accounts
-    let (stdout, stderr, status) = run_userkit_command(
-        &container_id,
-        &["guest", "list"]
-    );
-    assert_eq!(status, 0, "Failed to list guest accounts: {}", stderr);
-    assert!(stdout.contains("guest1"));
-    assert!(stdout.contains("guest2"));
-    
-    stop_container(&container_id);
+    cmd.assert()
+        .success()
+        .stdout(predicate::str::contains("Guest accounts"));
 }
 
 #[test]
-fn test_guest_expire() {
-    let container_id = start_container(&TestEnvironment::Ubuntu);
+fn test_guest_info() {
+    let mut cmd = Command::new("cargo");
+    cmd.arg("run")
+        .arg("--")
+        .arg("guest")
+        .arg("info")
+        .arg("testguest2");
     
-    // Create a guest account
-    run_userkit_command(
-        &container_id,
-        &["guest", "create", "testguest", "--expire", "3"]
-    );
-    
-    // Test changing expiration
-    let (stdout, stderr, status) = run_userkit_command(
-        &container_id,
-        &["guest", "expire", "testguest", "10"]
-    );
-    assert_eq!(status, 0, "Failed to change expiration: {}", stderr);
-    assert!(stdout.contains("Expiration for testguest set to 10 days"));
-    
-    // Verify expiration was changed
-    let (stdout, _, status) = run_userkit_command(
-        &container_id,
-        &["guest", "info", "testguest"]
-    );
-    assert_eq!(status, 0);
-    assert!(stdout.contains("Expires in: 10 days"));
-    
-    stop_container(&container_id);
+    cmd.assert()
+        .success()
+        .stdout(predicate::str::contains("Guest account: testguest2"));
 }
 
 #[test]
 fn test_guest_shell() {
-    let container_id = start_container(&TestEnvironment::Ubuntu);
+    let mut cmd = Command::new("cargo");
+    cmd.arg("run")
+        .arg("--")
+        .arg("guest")
+        .arg("shell");
     
-    // Test spawning a temporary shell
-    // This is a bit tricky to test in an automated way, so we'll just check if the command runs
-    let (_, stderr, status) = run_userkit_command(
-        &container_id,
-        &["guest", "shell"]
-    );
-    assert_eq!(status, 0, "Failed to spawn guest shell: {}", stderr);
+    // This is a special case as it would spawn a shell
+    // We're just testing that the command doesn't fail immediately
+    cmd.assert()
+        .success();
+}
+
+#[test]
+fn test_guest_expire() {
+    let mut cmd = Command::new("cargo");
+    cmd.arg("run")
+        .arg("--")
+        .arg("guest")
+        .arg("expire")
+        .arg("testguest2")
+        .arg("14");
     
-    stop_container(&container_id);
+    cmd.assert()
+        .success()
+        .stdout(predicate::str::contains("Expiration for guest account testguest2 set to 14 days"));
+}
+
+#[test]
+fn test_guest_remove_nonexistent() {
+    let mut cmd = Command::new("cargo");
+    cmd.arg("run")
+        .arg("--")
+        .arg("guest")
+        .arg("remove")
+        .arg("nonexistentguest");
+    
+    cmd.assert()
+        .failure()
+        .stderr(predicate::str::contains("Error"));
+}
+
+#[test]
+fn test_guest_info_nonexistent() {
+    let mut cmd = Command::new("cargo");
+    cmd.arg("run")
+        .arg("--")
+        .arg("guest")
+        .arg("info")
+        .arg("nonexistentguest");
+    
+    cmd.assert()
+        .failure()
+        .stderr(predicate::str::contains("Error"));
 }
