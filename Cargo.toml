@@ -5,7 +5,9 @@ edition = "2024"
 license = "MIT"
 description = "A unified cross-platform CLI tool for user management, providing consistent interface for user operations"
 keywords = ["cli", "user-management", "system-admin", "cross-platform"]
-categories = ["command-line-utilities", "os", "system"]
+categories = ["command-line-utilities", "os"]
+homepage = "https://github.com/pavi2410/userkit"
+repository = "https://github.com/pavi2410/userkit"
 
 [dependencies]
 clap = { version = "4.5.23", features = ["derive"] }
