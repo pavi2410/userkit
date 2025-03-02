@@ -129,7 +129,10 @@ pub enum UserCommands {
   /// Start a shell session
   Shell {
     /// Username to switch to
+    #[arg(long)]
     username: Option<String>,
+    /// Command to execute
+    command: Option<String>,
   },
 }
 

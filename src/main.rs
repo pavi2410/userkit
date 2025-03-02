@@ -19,8 +19,6 @@ fn main() {
   }
 }
 
-
-
 fn handle_user_commands(cmd: &UserCommands) {
   match cmd {
     UserCommands::List {
@@ -39,11 +37,7 @@ fn handle_user_commands(cmd: &UserCommands) {
         ListFormat::Csv => println!("CSV format not implemented yet"),
       }
     }
-    UserCommands::Info { username } => {
-      if !user::user_info(username) {
-        std::process::exit(1);
-      }
-    }
+    UserCommands::Info { username } => user::user_info(username),
     UserCommands::Add {
       username,
       home_dir,
@@ -90,20 +84,9 @@ fn handle_user_commands(cmd: &UserCommands) {
     UserCommands::Passwd { username } => {
       println!("Password for {} changed successfully", username);
     }
-    UserCommands::Shell { username } => {
-      match username {
-        Some(username) => {
-          // check if user exists
-          if user::user_info(username) {
-            println!("Switching to profile: {}", username);
-          } else {
-            eprintln!("Error: User {} not found", username);
-            std::process::exit(1);
-          }
-        }
-        None => {
-          println!("Starting temporary shell session");
-        }
+    UserCommands::Shell { username, command } => {
+      if !user::shell(username.as_deref(), command.as_deref()) {
+        std::process::exit(1);
       }
     }
   }

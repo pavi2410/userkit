@@ -229,3 +229,65 @@ fn has_escalated_privileges() -> bool {
     false
   }
 }
+
+pub(crate) fn shell(username: Option<&str>, command: Option<&str>) -> bool {
+  #[cfg(unix)]
+  {
+    use std::os::unix::process::CommandExt;
+    use std::process::Command;
+
+    // Verify user exists if username is provided
+    if let Some(username) = username {
+      if !user_exists(username) {
+        eprintln!("Error: User {} not found", username);
+        return false;
+      }
+    }
+
+    // Get user's shell from passwd if username provided, otherwise use /bin/sh
+    let shell = if let Some(username) = username {
+      let users = list_users();
+      users
+        .iter()
+        .find(|u| u.username == username)
+        .map(|u| u.shell.clone())
+        .unwrap_or_else(|| String::from("/bin/sh"))
+    } else {
+      String::from("/bin/sh")
+    };
+
+    let mut cmd = Command::new(&shell);
+
+    // If command is provided, execute it with -c flag
+    if let Some(command_str) = command {
+      cmd.arg("-c").arg(command_str);
+    }
+
+    // Set user context if username is provided
+    if let Some(username) = username {
+      if let Some(user) = list_users().into_iter().find(|u| u.username == username) {
+        unsafe {
+          cmd.uid(user.uid).gid(user.gid);
+        }
+      }
+    }
+
+    match cmd.status() {
+      Ok(status) => status.success(),
+      Err(e) => {
+        eprintln!("Failed to execute shell: {}", e);
+        false
+      }
+    }
+  }
+
+  #[cfg(not(unix))]
+  {
+    eprintln!("Shell command is only supported on Unix-like systems");
+    false
+  }
+}
+
+fn user_exists(username: &str) -> bool {
+  list_users().into_iter().any(|u| u.username == username)
+}
