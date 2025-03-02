@@ -2,18 +2,12 @@ use assert_cmd::prelude::*;
 use predicates::prelude::*;
 use std::process::Command;
 
-fn run_userkit_command(subcommands: Vec<&str>, run_privileged: bool) -> Command {
+fn run_userkit_command(subcommands: Vec<&str>, run_privileged: bool) -> &mut Command {
   let mut cmd = if run_privileged {
-    Command::new("sudo")
+    Command::new("sudo").arg("cargo").arg("run").arg("--")
   } else {
-    Command::new("cargo")
+    Command::new("cargo").arg("run").arg("--")
   };
-
-  if run_privileged {
-    cmd.arg("cargo");
-  }
-
-  cmd.arg("run").arg("--");
 
   for subcmd in subcommands {
     cmd.arg(subcmd);
