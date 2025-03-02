@@ -1,55 +1,67 @@
 mod user;
+mod cli;
 
-use clap::{Parser, Subcommand, ValueEnum};
+use clap::Parser;
 use std::fs;
+use cli::{Cli, Domains, UserCommands, ListFormat};
 
-#[derive(Parser)]
-#[command(name = "userkit")]
-#[command(about = "A CLI tool to manage users in Unix-based OS", long_about = None)]
-struct Cli {
-  #[command(subcommand)]
-  command: Commands,
-}
-
-#[derive(Subcommand)]
-enum Commands {
-  List {
-    #[clap(long, short, default_value = "table")]
-    format: ListFormat,
-  },
-  Info {
-    username: String,
-  },
-  Add {
-    username: String,
-    home_dir: String,
-  },
-  Delete {
-    username: String,
-  },
-  Modify {
-    username: String,
-  },
-}
-
-#[derive(ValueEnum, Clone)]
-enum ListFormat {
-  Table,
-  Json,
-}
+// CLI structure is now defined in cli.rs
 
 fn main() {
   let cli = Cli::parse();
 
-  match &cli.command {
-    Commands::List { format } => match format {
-      ListFormat::Table => list_users_as_table(),
-      ListFormat::Json => list_users_as_json(),
+  match &cli.domain {
+    Domains::User(cmd) => handle_user_commands(cmd),
+    Domains::Group(_) => println!("Group management not implemented yet"),
+    Domains::Perm(_) => println!("Permission management not implemented yet"),
+    Domains::Role(_) => println!("Role management not implemented yet"),
+    Domains::Guest(_) => println!("Guest account management not implemented yet"),
+    Domains::Config(_) => println!("Configuration management not implemented yet"),
+    Domains::Shell(_) => println!("Shell access not implemented yet"),
+  }
+}
+
+fn handle_user_commands(cmd: &UserCommands) {
+  match cmd {
+    UserCommands::List { format, uid_range, gid } => {
+      // Handle optional filters
+      if uid_range.is_some() || gid.is_some() {
+        println!("Filtering not implemented yet");
+      }
+      
+      match format {
+        ListFormat::Table => list_users_as_table(),
+        ListFormat::Json => list_users_as_json(),
+        ListFormat::Csv => println!("CSV format not implemented yet"),
+      }
     },
-    Commands::Info { username } => user_info(username),
-    Commands::Add { username, home_dir } => add_user(username, home_dir),
-    Commands::Delete { username } => delete_user(username),
-    Commands::Modify { username } => println!("Modify user {}", username),
+    UserCommands::Info { username } => user_info(username),
+    UserCommands::Add { username, home_dir, shell, uid, gid, gecos } => {
+      let home = home_dir.as_deref().unwrap_or("/home/");
+      add_user(username, home);
+      // Additional parameters not implemented yet
+      if shell.is_some() || uid.is_some() || gid.is_some() || gecos.is_some() {
+        println!("Additional parameters not implemented yet");
+      }
+    },
+    UserCommands::Remove { username, remove_home } => {
+      delete_user(username);
+      if *remove_home {
+        println!("Removing home directory not implemented yet");
+      }
+    },
+    UserCommands::Modify { username, .. } => {
+      println!("Modifying user {} not implemented yet", username);
+    },
+    UserCommands::Lock { username } => {
+      println!("Locking user {} not implemented yet", username);
+    },
+    UserCommands::Unlock { username } => {
+      println!("Unlocking user {} not implemented yet", username);
+    },
+    UserCommands::Passwd { username } => {
+      println!("Changing password for user {} not implemented yet", username);
+    },
   }
 }
 
@@ -120,6 +132,7 @@ fn add_user(username: &str, home_dir: &str) {
   println!("User {} added successfully", username);
 }
 
+// Renamed from delete_user to match the CLI command naming
 fn delete_user(username: &str) {
   let passwd_path = "/etc/passwd";
   let shadow_path = "/etc/shadow";
