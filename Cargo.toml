@@ -1,6 +1,9 @@
 [package]
+description = "A unified cross-platform CLI tool for user management, providing consistent interface for user operations"
+keywords = ["cli", "user-management", "system-administration", "cross-platform", "rust"]
+categories = ["command-line-utilities", "os", "system"]
 name = "userkit"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 description = "User management kit"
 license = "MIT"

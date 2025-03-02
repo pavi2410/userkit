@@ -1,5 +1,7 @@
 # UserKit
 
+[![Crate](https://img.shields.io/crates/v/userkit.svg)](https://crates.io/crates/userkit)
+
 UserKit is a comprehensive command-line interface (CLI) tool built in Rust for simplifying user management across different operating systems. It provides a consistent interface for common user management tasks that are typically scattered across various commands with different syntaxes.
 
 ## Features
@@ -10,6 +12,14 @@ UserKit is a comprehensive command-line interface (CLI) tool built in Rust for s
 - Cross-platform compatibility (in development)
 
 ## Installation
+
+### Using Cargo
+
+If you have Rust and Cargo installed, you can install UserKit directly from crates.io:
+
+```
+cargo install userkit
+```
 
 ### From Source
 
